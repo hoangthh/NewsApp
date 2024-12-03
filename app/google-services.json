@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "28838017363",
+    "project_id": "newsapp-fe6ea",
+    "storage_bucket": "newsapp-fe6ea.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28838017363:android:5f4206bc6118fdb21d89a6",
+        "android_client_info": {
+          "package_name": "tranhoang202204.gmail.com.newsapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2gpbQ5sFvPt0In6i_8rXtPWWCf7xGzx4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

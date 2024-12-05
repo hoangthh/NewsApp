@@ -3,6 +3,8 @@ package tranhoang202204.gmail.com.newsapp;
 import static android.content.ContentValues.TAG;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -36,6 +38,8 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -78,12 +82,14 @@ public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
     LinearLayout linearLayoutLogo, lnlHome;
 
-    TextView tvBookmark;
+    TextView tvBookmark, tvHistory;
     ListenerRegistration bookmarkListener;
 
     Fragment settingFragment;
 
-    @SuppressLint({"MissingInflatedId", "NonConstantResourceId"})
+    FirebaseUser currentUser;
+
+    @SuppressLint({"MissingInflatedId", "NonConstantResourceId", "ResourceType"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,8 +102,87 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        InitMainActivity();
+
+        // Nhận dữ liệu từ Intent
+        String viewType = getIntent().getStringExtra("viewType");
+        if ("history".equals(viewType)) {
+            recyclerViewCategory.setVisibility(View.GONE);
+            tvHistory.setVisibility(View.VISIBLE);
+
+            binding.bottomNavigationView.setSelectedItemId(2131231138);
+
+            firebaseHelper.getHistoryNews(newsList, newsAdapter); // Lấy lịch sử đọc
+        } else if ("bookmark".equals(viewType)) {
+            String id = currentUser.getUid();
+
+            recyclerViewCategory.setVisibility(View.GONE);
+            recyclerViewNews.setVisibility(View.VISIBLE);
+            svSearch.setVisibility(View.GONE);
+            tvBookmark.setVisibility(View.VISIBLE);
+            tvHistory.setVisibility(View.GONE);
+            RemoveFragment(settingFragment);
+
+            binding.bottomNavigationView.setSelectedItemId(2131230818);
+
+            if (bookmarkListener == null) {
+                bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
+            }
+        }
+        else {
+            // Nếu không phải lịch sử, load dữ liệu mặc định (tin tức chính)
+            LoadHomeData();
+        }
+
+        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
+            switch (item.getItemId()) {
+                case 2131230947: //home
+                    // Hủy listener nếu khong ở Bookmark
+                    RemoveListener(bookmarkListener);
+                    HandleHome();
+                    return true;
+
+                case 2131231124: //search
+                    // Hủy listener nếu khong ở Bookmark
+                    RemoveListener(bookmarkListener);
+                    HandleSearch();
+                    return true;
+
+                case 2131230818: //mark
+                    if (currentUser == null){
+                        new AlertDialog.Builder(this)
+                                .setTitle("Chưa đăng nhập")
+                                .setMessage("Bạn cần đăng nhập để sử dụng tính năng này")
+                                .setPositiveButton("Đăng nhập", (dialog, which) -> {
+                                    // Chuyển hướng đến LoginActivity
+                                    Intent loginIntent = new Intent(this, LoginActivity.class);
+                                    this.startActivity(loginIntent);
+                                })
+                                .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+                                .show();
+                        return false;
+                    } else {
+                        HandleBookmark();
+                    }
+                    return true;
+
+                case 2131231138: //setting
+                    // Hủy listener nếu khong ở Bookmark
+                    RemoveListener(bookmarkListener);
+                    HandleSetting();
+                    return true;
+            }
+            return false;
+        });
+    }
+
+    private void InitMainActivity(){
         // Khởi tạo lớp quản lí Firebase
         firebaseHelper = new FirebaseHelper();
+
+        // Khởi tạo user
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
         // Khởi tạo lớp Category
         category = new Category();
         // Khởi tạo arrayList chứa news
@@ -118,10 +203,13 @@ public class MainActivity extends AppCompatActivity {
         // Ánh xa TextView Bookmark
         tvBookmark = findViewById(R.id.tvBookmark);
 
+        // Ánh xạ TextView History
+        tvHistory = findViewById(R.id.tvHistory);
+
         // Ánh xa lnlHome
         lnlHome = findViewById(R.id.lnlHome);
 
-        //Khoi tao Setting Fragment
+        // Khoi tao Setting Fragment
         settingFragment = new SettingFragment();
 
         // Tạo và gán Adapter News
@@ -133,7 +221,9 @@ public class MainActivity extends AppCompatActivity {
         recyclerViewCategory.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         categoryAdapter = new CategoryViewAdapter(this, category.getCategoryList(), newsList, newsAdapter);
         recyclerViewCategory.setAdapter(categoryAdapter);
+    }
 
+    private void LoadHomeData(){
         // Tải dữ liệu từ Firestore
         String rssUrl = "https://thethao247.vn/" + "trang-chu" + ".rss";
         new ReadRss("trang-chu", new RssReadListener() {
@@ -142,102 +232,90 @@ public class MainActivity extends AppCompatActivity {
                 firebaseHelper.getNews(newsList, newsAdapter);
             }
         }).execute(rssUrl);
+    }
 
-        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
+    private void RemoveListener(ListenerRegistration bookmarkListener){
+        if (bookmarkListener != null) {
+            bookmarkListener.remove();
+            bookmarkListener = null;
+        }
+    }
 
-            switch (item.getItemId()) {
-                case 2131230947: //home
-                    // Hủy listener nếu đang ở Bookmark
-                    if (bookmarkListener != null) {
-                        bookmarkListener.remove();
-                        bookmarkListener = null;
-                    }
+    private void HandleHome(){
+        linearLayoutLogo.setVisibility(View.VISIBLE);
+        recyclerViewCategory.setVisibility(View.VISIBLE);
+        recyclerViewNews.setVisibility(View.VISIBLE);
+        svSearch.setVisibility(View.GONE);
+        tvBookmark.setVisibility(View.GONE);
+        tvHistory.setVisibility(View.GONE);
+        RemoveFragment(settingFragment);
 
-                    linearLayoutLogo.setVisibility(View.VISIBLE);
-                    recyclerViewCategory.setVisibility(View.VISIBLE);
-                    recyclerViewNews.setVisibility(View.VISIBLE);
-                    svSearch.setVisibility(View.GONE);
-                    tvBookmark.setVisibility(View.GONE);
-                    RemoveFragment(settingFragment);
+        // Tải dữ liệu từ Firestore
+        firebaseHelper.getNews(newsList, newsAdapter);
+    }
 
-                    // Tải dữ liệu từ Firestore
-                    firebaseHelper.getNews(newsList, newsAdapter);
-                    return true;
+    private void HandleSearch(){
+        // Tập trung vào item "search"
+        linearLayoutLogo.setVisibility(View.GONE);
+        recyclerViewCategory.setVisibility(View.GONE);
+        recyclerViewNews.setVisibility(View.VISIBLE);
+        svSearch.setVisibility(View.VISIBLE);
+        tvBookmark.setVisibility(View.GONE);
+        tvHistory.setVisibility(View.GONE);
+        RemoveFragment(settingFragment);
 
-                case 2131231124: //search
-                    // Hủy listener nếu đang ở Bookmark
-                    if (bookmarkListener != null) {
-                        bookmarkListener.remove();
-                        bookmarkListener = null;
-                    }
+        // SearchView không bị thu gọn
+        svSearch.setIconifiedByDefault(false);
 
-                    // Tập trung vào item "search"
-                    linearLayoutLogo.setVisibility(View.GONE);
-                    recyclerViewCategory.setVisibility(View.GONE);
-                    recyclerViewNews.setVisibility(View.VISIBLE);
-                    svSearch.setVisibility(View.VISIBLE);
-                    tvBookmark.setVisibility(View.GONE);
-                    RemoveFragment(settingFragment);
+        newsList.clear();
+        newsAdapter.notifyDataSetChanged();
 
-                    // SearchView không bị thu gọn
-                    svSearch.setIconifiedByDefault(false);
+        // Focus vào SearchView
+        svSearch.requestFocus();
+        svSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // Tìm kiếm khi người dùng nhấn Enter
+                firebaseHelper.searchNewsByTitle(query, newsList, newsAdapter);
+                return false;
+            }
 
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                // Tìm kiếm khi người dùng thay đổi văn bản
+                if (!newText.isEmpty()) {
+                    firebaseHelper.searchNewsByTitle(newText, newsList, newsAdapter);
+                } else {
                     newsList.clear();
                     newsAdapter.notifyDataSetChanged();
-
-                    // Focus vào SearchView
-                    svSearch.requestFocus();
-                    svSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                        @Override
-                        public boolean onQueryTextSubmit(String query) {
-                            // Tìm kiếm khi người dùng nhấn Enter
-                            firebaseHelper.searchNewsByTitle(query, newsList, newsAdapter);
-                            return false;
-                        }
-
-                        @Override
-                        public boolean onQueryTextChange(String newText) {
-                            // Tìm kiếm khi người dùng thay đổi văn bản
-                            if (!newText.isEmpty()) {
-                                firebaseHelper.searchNewsByTitle(newText, newsList, newsAdapter);
-                            } else {
-                                newsList.clear();
-                                newsAdapter.notifyDataSetChanged();
-                            }
-                            return false;
-                        }
-                    });
-                    return true;
-
-                case 2131230818: //mark
-                    recyclerViewCategory.setVisibility(View.GONE);
-                    recyclerViewNews.setVisibility(View.VISIBLE);
-                    svSearch.setVisibility(View.GONE);
-                    tvBookmark.setVisibility(View.VISIBLE);
-                    RemoveFragment(settingFragment);
-
-                    if (bookmarkListener == null) {
-                        bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
-                    }
-
-                    return true;
-                case 2131231138: //setting
-                    // Hủy listener nếu đang ở Bookmark
-                    if (bookmarkListener != null) {
-                        bookmarkListener.remove();
-                        bookmarkListener = null;
-                    }
-
-                    recyclerViewCategory.setVisibility(View.GONE);
-                    recyclerViewNews.setVisibility(View.GONE);
-                    svSearch.setVisibility(View.GONE);
-                    tvBookmark.setVisibility(View.GONE);
-                    LoadFragment(settingFragment, false);
-
-                    return true;
+                }
+                return false;
             }
-            return false;
         });
+    }
+
+    private void HandleBookmark(){
+        String id = currentUser.getUid();
+
+        recyclerViewCategory.setVisibility(View.GONE);
+        recyclerViewNews.setVisibility(View.VISIBLE);
+        svSearch.setVisibility(View.GONE);
+        tvBookmark.setVisibility(View.VISIBLE);
+        tvHistory.setVisibility(View.GONE);
+        RemoveFragment(settingFragment);
+
+        if (bookmarkListener == null) {
+            bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
+        }
+    }
+
+    private void HandleSetting(){
+        recyclerViewCategory.setVisibility(View.GONE);
+        recyclerViewNews.setVisibility(View.GONE);
+        svSearch.setVisibility(View.GONE);
+        tvBookmark.setVisibility(View.GONE);
+        tvHistory.setVisibility(View.GONE);
+        LoadFragment(settingFragment, false);
     }
 
     private void LoadFragment(Fragment fragment, boolean isAppInitialized){

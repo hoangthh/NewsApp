@@ -1,6 +1,7 @@
 package tranhoang202204.gmail.com.newsapp;
 
 public class News {
+    private String id;
     private String imageUrl;
     private String title;
     private String description;
@@ -10,7 +11,8 @@ public class News {
     private String comment;
     private String bookmarked;
 
-    public News(String imageUrl, String title, String description, String tag, String date, String bookmarked, String link) {
+    public News(String id, String imageUrl, String title, String description, String tag, String date, String bookmarked, String link) {
+        this.id = id;
         this.imageUrl = imageUrl;
         this.title = title;
         this.description = description;
@@ -18,6 +20,14 @@ public class News {
         this.date = date;
         this.bookmarked = bookmarked;
         this.link = link;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getImageUrl() {

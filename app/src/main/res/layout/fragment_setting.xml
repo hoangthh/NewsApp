@@ -61,6 +61,33 @@
             </LinearLayout>
 
         </LinearLayout>
+        <TextView
+            android:id="@+id/tvBookmark"
+            android:layout_marginTop="10dp"
+            android:drawableLeft="@drawable/bookmark"
+            android:drawablePadding="10dp"
+            android:textSize="25sp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tin đã lưu"/>
+        <TextView
+            android:id="@+id/tvHistory"
+            android:layout_marginTop="10dp"
+            android:drawableLeft="@drawable/baseline_history_24"
+            android:drawablePadding="10dp"
+            android:textSize="25sp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lịch sử đọc"/>
+        <TextView
+            android:id="@+id/tvLogout"
+            android:layout_marginTop="10dp"
+            android:drawableLeft="@drawable/baseline_logout_24"
+            android:drawablePadding="10dp"
+            android:textSize="25sp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Đăng xuất"/>
     </LinearLayout>
 
 </FrameLayout>

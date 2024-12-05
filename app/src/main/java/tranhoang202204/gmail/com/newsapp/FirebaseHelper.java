@@ -25,6 +25,7 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -39,9 +40,12 @@ public class FirebaseHelper {
     private FirebaseAuth auth;
     private GoogleSignInClient googleSignInClient;
 
+    private FirebaseUser currentUser;
+
     public FirebaseHelper() {
         this.db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();  // Khởi tạo FirebaseAuth
+        currentUser = auth.getCurrentUser();
     }
 
     // Khởi tạo GoogleSignInClient
@@ -157,25 +161,33 @@ public class FirebaseHelper {
                 });
     }
 
-
     // Lấy dữ liệu
     public void getNews(List<News> newsList, NewsViewAdapter newsAdapter) {
         db.collection("news").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if (task.isSuccessful()) {
+                    if (task.getResult() == null || task.getResult().isEmpty()) return;
+
                     newsList.clear();
                     for (QueryDocumentSnapshot document : task.getResult()) {
                         Map<String, Object> data = document.getData();
                         News news = new News(
+                                document.getId(),
                                 (String) data.get("imageUrl"),
                                 (String) data.get("title"),
                                 (String) data.get("description"),
                                 (String) data.get("tag"),
                                 (String) data.get("date"),
-                                (String) data.get("bookmark"),
+                                "false", // Tạm thời đặt trạng thái bookmark là false
                                 (String) data.get("link")
                         );
+
+                        if (currentUser != null){
+                            // Kiểm tra trạng thái bookmark
+                            checkBookmark(news, newsAdapter);
+                        }
+
                         newsList.add(news);
                     }
                     newsAdapter.update(newsList);
@@ -187,6 +199,7 @@ public class FirebaseHelper {
         });
     }
 
+
     // Hàm fetchNews để xử lý việc thay đổi tag và gọi API mới
     public void fetchNews(String tag, List<News> newsList, NewsViewAdapter newsAdapter) {
         String rssUrl = "https://thethao247.vn/" + tag + ".rss";
@@ -196,29 +209,45 @@ public class FirebaseHelper {
                 // Thực hiện truy vấn Firestore với tag đã chọn
                 db.collection("news")
                         .whereEqualTo("tag", tag)
-                        .get()  // Sử dụng tag để lọc dữ liệu
+                        .get()
                         .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                             @Override
                             public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                newsList.clear();
-                                for (QueryDocumentSnapshot q : task.getResult()) {
-                                    Map<String, Object> data = q.getData();
-                                    News news = new News((String) data.get("imageUrl")
-                                            , (String) data.get("title")
-                                            , (String) data.get("description")
-                                            , (String) data.get("tag")
-                                            , (String) data.get("date")
-                                            , (String) data.get("bookmark")
-                                            , (String) data.get("link"));
-                                    newsList.add(news);
+                                if (task.isSuccessful()) {
+                                    if (task.getResult() == null || task.getResult().isEmpty()) return;
+
+                                    newsList.clear();
+                                    for (QueryDocumentSnapshot q : task.getResult()) {
+                                        Map<String, Object> data = q.getData();
+                                        News news = new News(
+                                                q.getId(),
+                                                (String) data.get("imageUrl"),
+                                                (String) data.get("title"),
+                                                (String) data.get("description"),
+                                                (String) data.get("tag"),
+                                                (String) data.get("date"),
+                                                "false", // Tạm thời đặt trạng thái bookmark là false
+                                                (String) data.get("link")
+                                        );
+
+                                        if (currentUser != null){
+                                            // Kiểm tra trạng thái bookmark
+                                            checkBookmark(news, newsAdapter);
+                                        }
+
+                                        newsList.add(news);
+                                    }
+                                    newsAdapter.update(newsList);
+                                    newsAdapter.notifyDataSetChanged();
+                                } else {
+                                    Log.e("MainActivity", "Error getting documents: ", task.getException());
                                 }
-                                newsAdapter.update(newsList);
-                                newsAdapter.notifyDataSetChanged();
                             }
                         });
             }
         }).execute(rssUrl);
     }
+
 
     public void searchNewsByTitle(String query, List<News> newsList, NewsViewAdapter newsAdapter) {
         // Tìm kiếm trong Firestore với tiêu đề chứa từ khóa query
@@ -228,6 +257,8 @@ public class FirebaseHelper {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
+                            if (task.getResult() == null || task.getResult().isEmpty()) return;
+
                             newsList.clear();  // Xóa danh sách hiện tại
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 Map<String, Object> data = document.getData();
@@ -236,14 +267,20 @@ public class FirebaseHelper {
                                 // Kiểm tra nếu tiêu đề chứa từ khóa (keyword)
                                 if (title != null && title.toLowerCase().contains(query.toLowerCase())) {
                                     News news = new News(
+                                            document.getId(),
                                             (String) data.get("imageUrl"),
                                             title,
                                             (String) data.get("description"),
                                             (String) data.get("tag"),
                                             (String) data.get("date"),
-                                            (String) data.get("bookmark"),
+                                            "false",
                                             (String) data.get("link")
                                     );
+
+                                    if (currentUser != null){
+                                        // Kiểm tra trạng thái bookmark
+                                        checkBookmark(news, newsAdapter);
+                                    }
                                     newsList.add(news);
                                 }
                             }
@@ -256,75 +293,152 @@ public class FirebaseHelper {
                 });
     }
 
-    public void updateBookmark(String title, String bookmarkStatus){
-        db.collection("news")
-                .whereEqualTo("title", title)
-                .limit(1)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && !task.getResult().isEmpty()) {
-                        // Lấy document ID từ kết quả truy vấn
-                        String documentId = task.getResult().getDocuments().get(0).getId();
+    public void checkBookmark(News currentNews, NewsViewAdapter newsAdapter){
+        if (currentUser != null){
+            // Kiểm tra trạng thái bookmark
+            db.collection("users")
+                    .document(currentUser.getUid())
+                    .collection("bookmarks")
+                    .document(currentNews.getId())
+                    .get()
+                    .addOnCompleteListener(bookmarkTask -> {
+                        if (bookmarkTask.isSuccessful() && bookmarkTask.getResult().exists()) {
+                            currentNews.setBookmarked("true"); // Nếu đã bookmark
+                        }
+                        newsAdapter.notifyDataSetChanged();
+                    });
+        }
+    }
 
-                        // Cập nhật trường bookmark
-                        db.collection("news")
-                                .document(documentId)
-                                .update("bookmark", bookmarkStatus)
-                                .addOnSuccessListener(aVoid -> {
+    public void addBookmark(News news) {
+        if (currentUser == null) return;
 
-                                    Log.d(TAG, "Bookmark status updated successfully for title: " + title);
-                                });
-                    }
-                });
+        DocumentReference bookmarkRef = db.collection("users")
+                .document(currentUser.getUid())
+                .collection("bookmarks")
+                .document(news.getId());
+
+        Map<String, Object> bookmarkData = new HashMap<>();
+        bookmarkData.put("imageUrl", news.getImageUrl());
+        bookmarkData.put("title", news.getTitle());
+        bookmarkData.put("description", news.getDescription());
+        bookmarkData.put("link", news.getLink());
+        bookmarkData.put("date", news.getDate());
+        bookmarkData.put("tag", news.getTag());
+        bookmarkData.put("bookmark", news.getBookmarked());
+
+        bookmarkRef.set(bookmarkData)
+                .addOnSuccessListener(aVoid -> Log.d("FirebaseHelper", "Bookmark added successfully"))
+                .addOnFailureListener(e -> Log.e("FirebaseHelper", "Error adding bookmark", e));
+    }
+
+    public void removeBookmark(String newsId) {
+        if (currentUser == null) return;
+
+        DocumentReference bookmarkRef = db.collection("users")
+                .document(currentUser.getUid())
+                .collection("bookmarks")
+                .document(newsId);
+
+        bookmarkRef.delete()
+                .addOnSuccessListener(aVoid -> Log.d("FirebaseHelper", "Bookmark removed successfully"))
+                .addOnFailureListener(e -> Log.e("FirebaseHelper", "Error removing bookmark", e));
     }
 
     public ListenerRegistration getBookmarkedNews(List<News> newsList, NewsViewAdapter newsAdapter) {
-        return db.collection("news")
-                .whereEqualTo("bookmark", "true")
+        if (currentUser == null) {
+            return null; // Người dùng chưa đăng nhập, không thực hiện truy vấn
+        }
+
+        // Truy vấn sub-collection "bookmarks" của người dùng
+        return db.collection("users")
+                .document(currentUser.getUid())
+                .collection("bookmarks")
                 .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.e("FirebaseHelper", "Lỗi khi lấy danh sách bookmark", error);
+                        return;
+                    }
+
                     newsList.clear();
+
                     if (value != null && !value.isEmpty()) {
-                        newsList.clear();
                         for (QueryDocumentSnapshot document : value) {
                             Map<String, Object> data = document.getData();
                             News news = new News(
+                                    document.getId(), // Sử dụng ID tài liệu làm ID của News
                                     (String) data.get("imageUrl"),
                                     (String) data.get("title"),
                                     (String) data.get("description"),
                                     (String) data.get("tag"),
                                     (String) data.get("date"),
-                                    (String) data.get("bookmark"),
+                                    "true", // Đánh dấu là đã bookmark
                                     (String) data.get("link")
                             );
                             newsList.add(news);
                         }
-                        newsAdapter.update(newsList);
                     }
+                    // Cập nhật adapter
+                    newsAdapter.update(newsList);
                     newsAdapter.notifyDataSetChanged();
                 });
-//                .get()
-//                .addOnCompleteListener(task -> {
-//                    if (task.isSuccessful()) {
-//                        newsList.clear();
-//                        if (!task.getResult().isEmpty()) { // Kiểm tra nếu có tài liệu
-//                            for (QueryDocumentSnapshot document : task.getResult()) {
-//                                Map<String, Object> data = document.getData();
-//                                News news = new News(
-//                                        (String) data.get("imageUrl"),
-//                                        (String) data.get("title"),
-//                                        (String) data.get("description"),
-//                                        (String) data.get("tag"),
-//                                        (String) data.get("date"),
-//                                        (String) data.get("bookmark"),
-//                                        (String) data.get("link")
-//                                );
-//                                newsList.add(news);
-//                            }
-//                            newsAdapter.update(newsList);
-//                        }
-//                        newsAdapter.notifyDataSetChanged();
-//                    }
-//                });
+    }
+
+    public void addToHistory(News news) {
+        if (currentUser == null || news == null) return;
+
+        Map<String, Object> historyData = new HashMap<>();
+        historyData.put("imageUrl", news.getImageUrl());
+        historyData.put("title", news.getTitle());
+        historyData.put("description", news.getDescription());
+        historyData.put("tag", news.getTag());
+        historyData.put("date", news.getDate());
+        historyData.put("link", news.getLink());
+        historyData.put("timestamp", System.currentTimeMillis()); // Lưu thời gian đọc
+
+        db.collection("users")
+        .document(currentUser.getUid())
+        .collection("history")
+        .document(news.getId()) // Sử dụng ID của tin tức làm document ID
+        .set(historyData)
+        .addOnSuccessListener(aVoid -> Log.d("FirebaseHelper", "Added to history successfully"))
+        .addOnFailureListener(e -> Log.e("FirebaseHelper", "Failed to add to history", e));
+    }
+
+    public void getHistoryNews(List<News> newsList, NewsViewAdapter newsAdapter) {
+        if (currentUser == null) return;
+
+        db.collection("users")
+            .document(currentUser.getUid())
+            .collection("history")
+            .orderBy("timestamp", Query.Direction.DESCENDING) // Sắp xếp theo thời gian gần nhất
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (task.getResult() == null || task.getResult().isEmpty()) return;
+
+                    newsList.clear(); // Xóa danh sách cũ
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        Map<String, Object> data = document.getData();
+                        News news = new News(
+                                document.getId(),
+                                (String) data.get("imageUrl"),
+                                (String) data.get("title"),
+                                (String) data.get("description"),
+                                (String) data.get("tag"),
+                                (String) data.get("date"),
+                                "false", // Bookmark mặc định là false
+                                (String) data.get("link")
+                        );
+
+                        checkBookmark(news, newsAdapter);
+                        newsList.add(news);
+                    }
+                    // Cập nhật adapter
+                    newsAdapter.update(newsList);
+                    newsAdapter.notifyDataSetChanged();
+                }
+            });
     }
 
 }

@@ -78,6 +78,16 @@
                     android:layout_marginBottom="20dp"
                     android:textSize="30sp"
                     android:textStyle="bold"/>
+                <TextView
+                    android:visibility="gone"
+                    android:id="@+id/tvHistory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Lịch sử đọc"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginBottom="20dp"
+                    android:textSize="30sp"
+                    android:textStyle="bold"/>
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvNews"
                     android:layout_width="match_parent"

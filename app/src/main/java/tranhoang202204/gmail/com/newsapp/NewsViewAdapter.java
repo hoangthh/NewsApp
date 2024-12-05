@@ -1,5 +1,6 @@
 package tranhoang202204.gmail.com.newsapp;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -12,6 +13,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
@@ -22,10 +25,13 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
     private List<News> newsList;
     private MainActivity mainActivity;
 
+    private FirebaseHelper firebaseHelper;
+
     public NewsViewAdapter(MainActivity mainActivity, Context context, List<News> newsList) {
         this.mInflater = LayoutInflater.from(context);
         this.newsList = newsList;
         this.mainActivity = mainActivity;
+        this.firebaseHelper = new FirebaseHelper();
     }
 
     public void update(List<News> newsList){
@@ -56,6 +62,15 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
         Picasso.get().load(currentNews.getImageUrl()).into(holder.getImageView());
 
         holder.itemView.setOnClickListener(v -> {
+            // Lấy thông tin người dùng
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null) {
+                String userId = currentUser.getUid();
+
+                // Lưu vào lịch sử
+                firebaseHelper.addToHistory(currentNews); // Lưu tin tức vào lịch sử
+            }
+
             // Lấy context từ holder.itemView
             Context context = holder.itemView.getContext();
             Intent intent = new Intent(mainActivity, DetailActivity.class);
@@ -64,27 +79,37 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
         });
 
         holder.getImvBookmark().setOnClickListener(v -> {
-            String currentBookmarkStatus = currentNews.getBookmarked();
-            String newBookmarkStatus = currentNews.toggleBookmark(currentBookmarkStatus);
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-            new FirebaseHelper().updateBookmark(currentNews.getTitle(), newBookmarkStatus);
-
-
-            // Thay đổi hình ảnh bookmark theo trạng thái mới
-            if ("true".equals(newBookmarkStatus)) {
-                holder.getImvBookmark().setImageResource(R.drawable.bookmark);
-                Toast.makeText(mInflater.getContext(), "Da them vao bookmark: ", Toast.LENGTH_SHORT).show();
+            if (currentUser == null) {
+                // Hiển thị AlertDialog yêu cầu đăng nhập
+                new AlertDialog.Builder(mainActivity)
+                        .setTitle("Chưa đăng nhập")
+                        .setMessage("Bạn cần đăng nhập để sử dụng tính năng này")
+                        .setPositiveButton("Đăng nhập", (dialog, which) -> {
+                            // Chuyển hướng đến LoginActivity
+                            Intent loginIntent = new Intent(mainActivity, LoginActivity.class);
+                            mainActivity.startActivity(loginIntent);
+                        })
+                        .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+                        .show();
             } else {
-                holder.getImvBookmark().setImageResource(R.drawable.bookmark_non_filled);
-                Toast.makeText(mInflater.getContext(), "Da xoa khoi bookmark: ", Toast.LENGTH_SHORT).show();
-            }
+                String userId = currentUser.getUid(); // Lấy UID người dùng đăng nhập
 
-            // Kiểm tra trạng thái Bottom Navigation
-//            if ("bookmark".equals(mainActivity.bottomNavigationTab)) {
-//                // Cập nhật danh sách và adapter nếu đang ở tab bookmark
-//                new FirebaseHelper().getBookmarkedNews(newsList, mainActivity.newsAdapter); // Hàm cập nhật danh sách từ Firebase
-//                Toast.makeText(mainActivity, "on bookmark!!!", Toast.LENGTH_SHORT).show();
-//            }
+                if ("true".equals(currentNews.getBookmarked())) {
+                    // Nếu đã bookmark, thì xóa
+                    firebaseHelper.removeBookmark(currentNews.getId());
+                    holder.getImvBookmark().setImageResource(R.drawable.bookmark_non_filled);
+                    Toast.makeText(mInflater.getContext(), "Đã xóa khỏi bookmark", Toast.LENGTH_SHORT).show();
+                    currentNews.setBookmarked("false");
+                } else {
+                    // Nếu chưa bookmark, thì thêm
+                    firebaseHelper.addBookmark(currentNews);
+                    holder.getImvBookmark().setImageResource(R.drawable.bookmark);
+                    Toast.makeText(mInflater.getContext(), "Đã thêm vào bookmark", Toast.LENGTH_SHORT).show();
+                    currentNews.setBookmarked("true");
+                }
+            }
         });
     }
 

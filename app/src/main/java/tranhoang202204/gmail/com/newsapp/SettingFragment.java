@@ -23,8 +23,10 @@ import com.squareup.picasso.Picasso;
  * create an instance of this fragment.
  */
 public class SettingFragment extends Fragment {
-    TextView tvLogin, tvDisplayName, tvEmail;
+    TextView tvLogin, tvDisplayName, tvEmail, tvLogout, tvBookmark, tvHistory;
     ImageView imvAvatar;
+
+    private FirebaseHelper firebaseHelper; // Thêm FirebaseHelper
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -73,16 +75,26 @@ public class SettingFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_setting, container, false);
 
+        // Khởi tạo FirebaseHelper
+        firebaseHelper = new FirebaseHelper();
+        firebaseHelper.initGoogleSignInClient(getActivity());
+
         tvLogin = view.findViewById(R.id.tvLogin);
         tvDisplayName = view.findViewById(R.id.tvDisplayName);
         tvEmail = view.findViewById(R.id.tvEmail);
         imvAvatar = view.findViewById(R.id.imvAvatar);
+
+        tvBookmark = view.findViewById(R.id.tvBookmark);
+        tvHistory = view.findViewById(R.id.tvHistory);
+
+        tvLogout = view.findViewById(R.id.tvLogout);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
         if (currentUser != null) {
             // Người dùng đã đăng nhập
             tvLogin.setVisibility(View.GONE); // Ẩn TextView Đăng nhập
+            tvLogout.setVisibility(View.VISIBLE);
 
             // Hiển thị thông tin người dùng
             tvDisplayName.setText(currentUser.getDisplayName());
@@ -93,12 +105,48 @@ public class SettingFragment extends Fragment {
                 Picasso.get().load(currentUser.getPhotoUrl()).into(imvAvatar);
             }
 
+            tvBookmark.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), MainActivity.class);
+                intent.putExtra("viewType", "bookmark"); // Gửi loại dữ liệu là 'history'
+                startActivity(intent);
+            });
+
+            tvHistory.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), MainActivity.class);
+                intent.putExtra("viewType", "history"); // Gửi loại dữ liệu là 'history'
+                startActivity(intent);
+            });
+
+            // Đăng xuất khi click vào tvLogout
+            tvLogout.setVisibility(View.VISIBLE);
+            tvLogout.setOnClickListener(v -> {
+                firebaseHelper.signOut(getActivity(), new FirebaseHelper.SignOutCallback() {
+                    @Override
+                    public void onSignOutComplete() {
+                        // Khi đăng xuất thành công
+                        tvLogin.setVisibility(View.VISIBLE); // Hiển thị lại TextView Đăng nhập
+                        tvDisplayName.setVisibility(View.GONE); // Ẩn các thông tin người dùng
+                        tvEmail.setVisibility(View.GONE);
+                        imvAvatar.setVisibility(View.GONE);
+                        tvBookmark.setVisibility(View.GONE);
+                        tvHistory.setVisibility(View.GONE);
+                        tvLogout.setVisibility(View.GONE);
+
+                        // Hiển thị thông báo
+                        Toast.makeText(getContext(), "Đăng xuất thành công", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+
         } else {
             // Người dùng chưa đăng nhập
             tvLogin.setVisibility(View.VISIBLE); // Hiển thị lại TextView Đăng nhập
             tvDisplayName.setVisibility(View.GONE); // Ẩn các thông tin người dùng
             tvEmail.setVisibility(View.GONE);
             imvAvatar.setVisibility(View.GONE);
+            tvBookmark.setVisibility(View.GONE);
+            tvHistory.setVisibility(View.GONE);
+            tvLogout.setVisibility(View.GONE);
         }
 
         // Gán sự kiện click

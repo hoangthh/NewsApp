@@ -71,7 +71,7 @@ public class CategoryViewAdapter extends RecyclerView.Adapter<CategoryViewHolder
                 // Khi click, gọi fetchNews với tag tương ứng
                 Category category = new Category();
                 String tag = category.getTagForCategory(currentCategory);
-                new FirebaseHelper().fetchNews(tag, newsList, newsAdapter);
+                new FirebaseHelper().getNewsByTag(tag, newsList, newsAdapter);
             }
         });
     }

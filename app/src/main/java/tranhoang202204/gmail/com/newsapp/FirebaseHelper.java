@@ -121,7 +121,7 @@ public class FirebaseHelper {
     }
 
     // Thêm dữ liệu
-    public void addNews(Map<String, Object> newsData) {
+    public void addNews(Map<String, Object> newsData, final NewsAddListener listener) {
         String title = (String) newsData.get("title"); // Lấy giá trị của title từ newsData
 
         // Kiểm tra xem title đã tồn tại trong Firestore chưa
@@ -134,6 +134,7 @@ public class FirebaseHelper {
                         // Nếu title đã tồn tại
                         if (!queryDocumentSnapshots.isEmpty()) {
                             Log.d(TAG, "Title already exists, not adding new news.");
+                            listener.onNewsAddComplete();  // Gọi callback khi hoàn thành
                         } else {
                             // Nếu title chưa tồn tại, thêm tin tức mới
                             db.collection("news")
@@ -142,12 +143,14 @@ public class FirebaseHelper {
                                         @Override
                                         public void onSuccess(DocumentReference documentReference) {
                                             Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                                            listener.onNewsAddComplete();  // Gọi callback khi hoàn thành
                                         }
                                     })
                                     .addOnFailureListener(new OnFailureListener() {
                                         @Override
                                         public void onFailure(@NonNull Exception e) {
                                             Log.w(TAG, "Error adding document", e);
+                                            listener.onNewsAddComplete();  // Gọi callback ngay cả khi thất bại
                                         }
                                     });
                         }
@@ -157,9 +160,11 @@ public class FirebaseHelper {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Log.w(TAG, "Error checking for title", e);
+                        listener.onNewsAddComplete();  // Gọi callback khi thất bại
                     }
                 });
     }
+
 
     // Lấy dữ liệu
     public void getNews(List<News> newsList, NewsViewAdapter newsAdapter) {
@@ -201,7 +206,7 @@ public class FirebaseHelper {
 
 
     // Hàm fetchNews để xử lý việc thay đổi tag và gọi API mới
-    public void fetchNews(String tag, List<News> newsList, NewsViewAdapter newsAdapter) {
+    public void getNewsByTag(String tag, List<News> newsList, NewsViewAdapter newsAdapter) {
         String rssUrl = "https://thethao247.vn/" + tag + ".rss";
         new ReadRss(tag, new RssReadListener() {
             @Override

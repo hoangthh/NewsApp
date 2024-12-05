@@ -86,6 +86,9 @@ public class ReadRss extends AsyncTask<String, Void, String> {
         NodeList nodeListTitle = document.getElementsByTagName("title");
         NodeList nodeListDescription = document.getElementsByTagName("description");
 
+        int totalItems = nodeList.getLength();  // Tổng số mục tin tức
+        final int[] processedItems = {0};  // Biến đếm số lượng mục tin tức đã được xử lý
+
         for (int i = 0; i < nodeList.getLength(); i++){
             Element element = (Element) nodeList.item(i);
 
@@ -118,7 +121,16 @@ public class ReadRss extends AsyncTask<String, Void, String> {
             newsItem.put("tag", tag);
             newsItem.put("bookmark", bookmark);
 
-            new FirebaseHelper().addNews(newsItem);
+            new FirebaseHelper().addNews(newsItem, new NewsAddListener() {
+                @Override
+                public void onNewsAddComplete() {
+                    // Sau khi hoàn tất thêm tin, gọi lại phương thức trong MainActivity
+                    if (listener != null) {
+                        listener.onRssReadComplete();
+                    }
+                }
+            });
+
         }
         // Gọi callback khi hoàn thành
         if (listener != null) {
@@ -126,4 +138,5 @@ public class ReadRss extends AsyncTask<String, Void, String> {
         }
     }
 }
+
 

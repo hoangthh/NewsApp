@@ -12,7 +12,20 @@
           "package_name": "tranhoang202204.gmail.com.newsapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "28838017363-929d3dk1tlek47pekqi2u84qb4lck4eb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "tranhoang202204.gmail.com.newsapp",
+            "certificate_hash": "0b806683833402db2ab6068dba1cda8724b7df5a"
+          }
+        },
+        {
+          "client_id": "28838017363-1hdm242fgtub0rjh1kglk2j2kr1a3rn2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB2gpbQ5sFvPt0In6i_8rXtPWWCf7xGzx4"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "28838017363-1hdm242fgtub0rjh1kglk2j2kr1a3rn2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

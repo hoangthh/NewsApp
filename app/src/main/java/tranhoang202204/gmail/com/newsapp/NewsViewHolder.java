@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class NewsViewHolder extends RecyclerView.ViewHolder{
     private TextView txtTitle, txtDescription, txtTag, txtDate, txtComment;
-    private ImageView imvImage;
+    private ImageView imvImage, imvBookmark;
     private NewsViewAdapter adapter;
 
     public NewsViewHolder(@NonNull View itemView, NewsViewAdapter adapter) {
@@ -21,6 +21,7 @@ public class NewsViewHolder extends RecyclerView.ViewHolder{
         txtDate = itemView.findViewById(R.id.tvDate);
         txtComment = itemView.findViewById(R.id.tvComment);
         imvImage = itemView.findViewById(R.id.ivImage);
+        imvBookmark = itemView.findViewById(R.id.imvBookmark);
         this.adapter = adapter;
     }
 
@@ -46,5 +47,9 @@ public class NewsViewHolder extends RecyclerView.ViewHolder{
 
     public ImageView getImageView() {
         return imvImage;
+    }
+
+    public ImageView getImvBookmark() {
+        return imvBookmark;
     }
 }

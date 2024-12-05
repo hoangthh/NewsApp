@@ -6,14 +6,18 @@ public class News {
     private String description;
     private String tag;
     private String date;
+    private String link;
     private String comment;
+    private String bookmarked;
 
-    public News(String imageUrl, String title, String description, String tag, String date) {
+    public News(String imageUrl, String title, String description, String tag, String date, String bookmarked, String link) {
         this.imageUrl = imageUrl;
         this.title = title;
         this.description = description;
         this.tag = tag;
         this.date = date;
+        this.bookmarked = bookmarked;
+        this.link = link;
     }
 
     public String getImageUrl() {
@@ -54,5 +58,30 @@ public class News {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    // Getter và setter cho bookmark
+    public String getBookmarked() {
+        return bookmarked;
+    }
+
+    public void setBookmarked(String bookmarked) {
+        this.bookmarked = bookmarked;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
+
+    public String toggleBookmark(String bookmarkStatus){
+        String newBookmarkStatus = "true";
+        if ("true".equals(bookmarkStatus)){
+            newBookmarkStatus = "false";
+        }
+        return newBookmarkStatus;
     }
 }

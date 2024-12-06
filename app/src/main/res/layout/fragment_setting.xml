@@ -88,6 +88,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Đăng xuất"/>
+
+        <TextView
+            android:id="@+id/tvAdmin"
+            android:layout_marginTop="10dp"
+            android:drawableLeft="@drawable/baseline_developer_mode_24"
+            android:drawablePadding="10dp"
+            android:textSize="25sp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nhà phát triển"/>
     </LinearLayout>
 
 </FrameLayout>

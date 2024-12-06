@@ -63,6 +63,10 @@ public class CategoryViewAdapter extends RecyclerView.Adapter<CategoryViewHolder
 
         // Xử lý sự kiện click
         holder.itemView.setOnClickListener(v -> {
+            if (!NetworkUtils.isNetworkAvailable(context)) {
+                Toast.makeText(context, "Internet disabled to use category", Toast.LENGTH_SHORT).show();
+                return;
+            }
             // Đặt lại vị trí chọn và notify adapter
             selectedPosition = position;
             notifyDataSetChanged();

@@ -62,6 +62,11 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
         Picasso.get().load(currentNews.getImageUrl()).into(holder.getImageView());
 
         holder.itemView.setOnClickListener(v -> {
+            if (!NetworkUtils.isNetworkAvailable(mInflater.getContext())){
+                Toast.makeText(mInflater.getContext(), "Internet disabled to read detail news", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             // Lấy thông tin người dùng
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             if (currentUser != null) {

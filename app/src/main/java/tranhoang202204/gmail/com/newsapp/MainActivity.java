@@ -5,6 +5,7 @@ import static android.content.ContentValues.TAG;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +16,7 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -89,6 +91,10 @@ public class MainActivity extends AppCompatActivity {
 
     FirebaseUser currentUser;
 
+    SQLiteHelper sqliteHelper;
+
+    ProgressBar progressBar;
+
     @SuppressLint({"MissingInflatedId", "NonConstantResourceId", "ResourceType"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,35 +109,48 @@ public class MainActivity extends AppCompatActivity {
         });
 
         InitMainActivity();
+        sqliteHelper = new SQLiteHelper(this);
+        progressBar = findViewById(R.id.progressBar);
 
-        // Nhận dữ liệu từ Intent
-        String viewType = getIntent().getStringExtra("viewType");
-        if ("history".equals(viewType)) {
-            recyclerViewCategory.setVisibility(View.GONE);
-            tvHistory.setVisibility(View.VISIBLE);
+        if (NetworkUtils.isNetworkAvailable(this)) {
+            // Có kết nối mạng: Lấy tin từ Firebase và lưu vào SQLite
 
-            binding.bottomNavigationView.setSelectedItemId(2131231138);
+            // Nhận dữ liệu từ Intent
+            String viewType = getIntent().getStringExtra("viewType");
+            if ("history".equals(viewType)) {
+                recyclerViewCategory.setVisibility(View.GONE);
+                tvHistory.setVisibility(View.VISIBLE);
 
-            firebaseHelper.getHistoryNews(newsList, newsAdapter); // Lấy lịch sử đọc
-        } else if ("bookmark".equals(viewType)) {
-            String id = currentUser.getUid();
+                binding.bottomNavigationView.setSelectedItemId(2131231138);
 
-            recyclerViewCategory.setVisibility(View.GONE);
-            recyclerViewNews.setVisibility(View.VISIBLE);
-            svSearch.setVisibility(View.GONE);
-            tvBookmark.setVisibility(View.VISIBLE);
-            tvHistory.setVisibility(View.GONE);
-            RemoveFragment(settingFragment);
+                firebaseHelper.getHistoryNews(newsList, newsAdapter); // Lấy lịch sử đọc
+            } else if ("bookmark".equals(viewType)) {
+                String id = currentUser.getUid();
 
-            binding.bottomNavigationView.setSelectedItemId(2131230818);
+                recyclerViewCategory.setVisibility(View.GONE);
+                recyclerViewNews.setVisibility(View.VISIBLE);
+                svSearch.setVisibility(View.GONE);
+                tvBookmark.setVisibility(View.VISIBLE);
+                tvHistory.setVisibility(View.GONE);
+                RemoveFragment(settingFragment);
 
-            if (bookmarkListener == null) {
-                bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
+                binding.bottomNavigationView.setSelectedItemId(2131230818);
+
+                if (bookmarkListener == null) {
+                    bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
+                }
             }
-        }
-        else {
-            // Nếu không phải lịch sử, load dữ liệu mặc định (tin tức chính)
-            LoadHomeData();
+            else {
+                // Nếu không phải lịch sử, load dữ liệu mặc định (tin tức chính)
+                LoadHomeData();
+            }
+
+            Toast.makeText(this, "Internet connected", Toast.LENGTH_LONG).show();
+        } else {
+            // Không có kết nối mạng: Lấy tin từ SQLite
+            sqliteHelper.fetchNewsFromSQLite(newsList, newsAdapter);
+
+            Toast.makeText(this, "Internet DISCONNECTED !!!", Toast.LENGTH_LONG).show();
         }
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
@@ -162,7 +181,18 @@ public class MainActivity extends AppCompatActivity {
                                 .show();
                         return false;
                     } else {
-                        HandleBookmark();
+                        String id = currentUser.getUid();
+
+                        recyclerViewCategory.setVisibility(View.GONE);
+                        recyclerViewNews.setVisibility(View.VISIBLE);
+                        svSearch.setVisibility(View.GONE);
+                        tvBookmark.setVisibility(View.VISIBLE);
+                        tvHistory.setVisibility(View.GONE);
+                        RemoveFragment(settingFragment);
+
+                        if (bookmarkListener == null) {
+                            bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
+                        }
                     }
                     return true;
 
@@ -173,6 +203,34 @@ public class MainActivity extends AppCompatActivity {
                     return true;
             }
             return false;
+        });
+
+        // Cấu hình RecyclerView và sự kiện cuộn
+        setupRecyclerView();
+    }
+
+    private void setupRecyclerView() {
+        // Thêm sự kiện cuộn để tải thêm tin khi cuộn đến cuối
+        recyclerViewNews.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                if (layoutManager != null && layoutManager.findLastVisibleItemPosition() == newsList.size() - 1) {
+                    // Hiển thị ProgressBar khi tải thêm dữ liệu
+                    progressBar.setVisibility(View.VISIBLE);
+
+                    firebaseHelper.getNewsWithPagination(newsList, newsAdapter, sqliteHelper, false, success -> {
+                        progressBar.setVisibility(View.GONE);
+                        if (success) {
+                            Toast.makeText(MainActivity.this, "Loaded more news", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Failed to load more news", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
         });
     }
 
@@ -229,7 +287,14 @@ public class MainActivity extends AppCompatActivity {
         new ReadRss("trang-chu", new RssReadListener() {
             @Override
             public void onRssReadComplete() {
-                firebaseHelper.getNews(newsList, newsAdapter);
+                firebaseHelper.getNewsAndAddNewsToSqlite(newsList, newsAdapter, sqliteHelper);
+//                firebaseHelper.getNewsWithPagination(newsList, newsAdapter, sqliteHelper, true, success -> {
+//                    if (success) {
+//                        Toast.makeText(MainActivity.this, "First loaded news from Firebase", Toast.LENGTH_LONG).show();
+//                    } else {
+//                        Toast.makeText(MainActivity.this, "Failed to first load news", Toast.LENGTH_LONG).show();
+//                    }
+//                });
             }
         }).execute(rssUrl);
     }

@@ -88,6 +88,7 @@
                     android:layout_marginBottom="20dp"
                     android:textSize="30sp"
                     android:textStyle="bold"/>
+
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvNews"
                     android:layout_width="match_parent"
@@ -96,6 +97,17 @@
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>
+
+    <!-- ProgressBar -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/lnlHome"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:visibility="gone" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"

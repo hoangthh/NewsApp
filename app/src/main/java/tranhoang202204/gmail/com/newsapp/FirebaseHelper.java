@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
@@ -42,10 +43,16 @@ public class FirebaseHelper {
 
     private FirebaseUser currentUser;
 
+    private DocumentSnapshot lastVisible;
+    private boolean isLoading;
+
     public FirebaseHelper() {
         this.db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();  // Khởi tạo FirebaseAuth
         currentUser = auth.getCurrentUser();
+
+        lastVisible = null;
+        isLoading = false;
     }
 
     // Khởi tạo GoogleSignInClient
@@ -118,6 +125,17 @@ public class FirebaseHelper {
 
     public interface SignOutCallback {
         void onSignOutComplete();
+    }
+
+    public interface FirebaseCallback {
+        void onSuccess(Map<String, Object> newsData);
+
+        void onFailure(Exception e);
+    }
+
+    // Listener để gọi lại khi dữ liệu đã được tải xong
+    public interface OnDataFetchedListener {
+        void onDataFetched(boolean success);
     }
 
     // Thêm dữ liệu
@@ -204,6 +222,139 @@ public class FirebaseHelper {
         });
     }
 
+    public void getNewsAndAddNewsToSqlite(List<News> newsList, NewsViewAdapter newsAdapter, SQLiteHelper sqliteHelper) {
+        db.collection("news").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()) {
+                    if (task.getResult() == null || task.getResult().isEmpty()) return;
+
+                    newsList.clear(); // Xóa dữ liệu cũ
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        Map<String, Object> data = document.getData();
+                        String title = (String) data.get("title");
+
+                        // Tạo đối tượng News
+                        News news = new News(
+                                document.getId(),
+                                (String) data.get("imageUrl"),
+                                title,
+                                (String) data.get("description"),
+                                (String) data.get("tag"),
+                                (String) data.get("date"),
+                                "false", // Tạm thời đặt trạng thái bookmark là false
+                                (String) data.get("link")
+                        );
+
+                        if (currentUser != null) {
+                            // Kiểm tra trạng thái bookmark
+                            checkBookmark(news, newsAdapter);
+                        }
+
+                        // Thêm tin vào danh sách hiển thị (cập nhật giao diện)
+                        newsList.add(news);
+
+                        // Kiểm tra nếu tiêu đề chưa tồn tại thì mới thêm vào SQLite
+                        if (!sqliteHelper.isNewsExists(title)) {
+                            Map<String, String> newsData = new HashMap<>();
+                            newsData.put("title", news.getTitle());
+                            newsData.put("description", news.getDescription());
+                            newsData.put("imageUrl", news.getImageUrl());
+                            newsData.put("date", news.getDate());
+                            newsData.put("link", news.getLink());
+                            newsData.put("tag", news.getTag());
+                            newsData.put("bookmark", news.getBookmarked());
+
+                            sqliteHelper.addNews(newsData); // Lưu vào SQLite
+                        }
+                    }
+
+                    // Cập nhật Adapter
+                    newsAdapter.update(newsList);
+                    newsAdapter.notifyDataSetChanged();
+                } else {
+                    Log.e("MainActivity", "Error getting documents: ", task.getException());
+                }
+            }
+        });
+    }
+
+    // Lấy dữ liệu tin tức từ Firebase với phân trang
+    public void getNewsWithPagination(List<News> newsList, NewsViewAdapter newsAdapter, SQLiteHelper sqliteHelper, boolean isFirstLoad, OnDataFetchedListener listener) {
+        if (isLoading) return;  // Nếu đang tải, không làm gì thêm
+
+        isLoading = true;
+        Query query = db.collection("news")
+                .orderBy("date", Query.Direction.DESCENDING)
+                .limit(3); // Giới hạn số tin tải về
+
+        if (lastVisible != null) {
+            query = query.startAfter(lastVisible);
+        }
+
+        query.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                if (task.getResult() == null || task.getResult().isEmpty()) {
+                    isLoading = false;
+                    listener.onDataFetched(false); // Không có dữ liệu mới
+                    return;
+                }
+
+                if (isFirstLoad) {
+                    newsList.clear();  // Xóa dữ liệu cũ trong lần tải đầu tiên
+                }
+
+                // Duyệt qua các document trả về từ Firebase
+                for (QueryDocumentSnapshot document : task.getResult()) {
+                    Map<String, Object> data = document.getData();
+                    String title = (String) data.get("title");
+
+                    News news = new News(
+                            document.getId(),
+                            (String) data.get("imageUrl"),
+                            title,
+                            (String) data.get("description"),
+                            (String) data.get("tag"),
+                            (String) data.get("date"),
+                            "false",
+                            (String) data.get("link")
+                    );
+
+                    newsList.add(news);
+
+                    // Kiểm tra nếu tiêu đề đã tồn tại trong SQLite
+                    if (sqliteHelper.isNewsExists(title)) {
+                        continue; // Bỏ qua nếu đã tồn tại
+                    }
+
+                    // Lưu vào SQLite nếu chưa có
+                    Map<String, String> newsData = new HashMap<>();
+                    newsData.put("title", news.getTitle());
+                    newsData.put("description", news.getDescription());
+                    newsData.put("imageUrl", news.getImageUrl());
+                    newsData.put("date", news.getDate());
+                    newsData.put("link", news.getLink());
+                    newsData.put("tag", news.getTag());
+                    newsData.put("bookmark", news.getBookmarked());
+                    sqliteHelper.addNews(newsData);
+                }
+
+                // Cập nhật lastVisible để lấy các tin tiếp theo
+                lastVisible = task.getResult().getDocuments().get(task.getResult().size() - 1);
+
+                // Cập nhật UI
+                newsAdapter.update(newsList);
+                newsAdapter.notifyDataSetChanged();
+
+                isLoading = false;
+                listener.onDataFetched(true); // Dữ liệu đã được tải và cập nhật
+            } else {
+                Log.e("FirebaseHelper", "Error getting documents: ", task.getException());
+                isLoading = false;
+                listener.onDataFetched(false); // Có lỗi trong quá trình tải dữ liệu
+            }
+        });
+    }
 
     // Hàm fetchNews để xử lý việc thay đổi tag và gọi API mới
     public void getNewsByTag(String tag, List<News> newsList, NewsViewAdapter newsAdapter) {

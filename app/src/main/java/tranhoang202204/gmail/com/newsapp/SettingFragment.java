@@ -189,9 +189,6 @@ public class SettingFragment extends Fragment {
             Intent intent = new Intent(getActivity(), LoginActivity.class);
             startActivity(intent);
             getActivity().overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
-
-            // Hành động khi click vào TextView
-            Toast.makeText(getContext(), "Đăng nhập Google được nhấn", Toast.LENGTH_SHORT).show();
         });
 
         return view;

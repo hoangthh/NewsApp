@@ -149,13 +149,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 LoadHomeData();
 
             }
-
-            Toast.makeText(this, "Internet connected", Toast.LENGTH_LONG).show();
         } else {
             // Không có kết nối mạng: Lấy tin từ SQLite
             sqliteHelper.fetchNewsFromSQLite(newsList, newsAdapter);
 
-            Toast.makeText(this, "Internet DISCONNECTED !!!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Mất kết nối mạng", Toast.LENGTH_LONG).show();
         }
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
@@ -211,13 +209,19 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             int itemId = item.getItemId();
             if (itemId == 2131230947) { // home
                 // Hủy listener nếu không ở Bookmark
-                RemoveListener(bookmarkListener);
+                if (bookmarkListener != null) {
+                    bookmarkListener.remove();
+                    bookmarkListener = null;
+                }
                 HandleHome();
                 return true;
 
             } else if (itemId == R.id.search) { // search
                 // Hủy listener nếu không ở Bookmark
-                RemoveListener(bookmarkListener);
+                if (bookmarkListener != null) {
+                    bookmarkListener.remove();
+                    bookmarkListener = null;
+                }
                 HandleSearch();
                 return true;
 
@@ -252,7 +256,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
             } else if (itemId == R.id.setting) { // setting
                 // Hủy listener nếu không ở Bookmark
-                RemoveListener(bookmarkListener);
+                if (bookmarkListener != null) {
+                    bookmarkListener.remove();
+                    bookmarkListener = null;
+                }
                 HandleSetting();
                 return true;
 
@@ -364,13 +371,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 //                });
             }
         }).execute(rssUrl);
-    }
-
-    private void RemoveListener(ListenerRegistration bookmarkListener){
-        if (bookmarkListener != null) {
-            bookmarkListener.remove();
-            bookmarkListener = null;
-        }
     }
 
     private void HandleHome(){

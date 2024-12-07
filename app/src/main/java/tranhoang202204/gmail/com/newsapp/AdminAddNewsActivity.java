@@ -3,6 +3,7 @@ package tranhoang202204.gmail.com.newsapp;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -115,7 +116,12 @@ public class AdminAddNewsActivity extends AppCompatActivity {
                     .show();
         });
 
-        btnBack.setOnClickListener(v -> finish());
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
     }
 
     private void ExecuteUpdateNews() {

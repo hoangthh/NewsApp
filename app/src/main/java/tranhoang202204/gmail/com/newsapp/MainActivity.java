@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -135,7 +136,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 tvHistory.setVisibility(View.GONE);
                 RemoveFragment(settingFragment);
 
-                binding.bottomNavigationView.setSelectedItemId(2131230818);
+                // binding.bottomNavigationView.setSelectedItemId(2131230818);
+                binding.bottomNavigationView.setSelectedItemId(R.id.bookmark);
 
                 if (bookmarkListener == null) {
                     bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
@@ -157,55 +159,108 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-            switch (item.getItemId()) {
-                case 2131230947: //home
-                    // Hủy listener nếu khong ở Bookmark
-                    RemoveListener(bookmarkListener);
-                    HandleHome();
-                    return true;
 
-                case 2131231124: //search
-                    // Hủy listener nếu khong ở Bookmark
-                    RemoveListener(bookmarkListener);
-                    HandleSearch();
-                    return true;
+//            switch (item.getItemId()) {
+//                case 2131230947: //home
+//                    // Hủy listener nếu khong ở Bookmark
+//                    RemoveListener(bookmarkListener);
+//                    HandleHome();
+//                    return true;
+//
+//                case 2131231124: //search
+//                    // Hủy listener nếu khong ở Bookmark
+//                    RemoveListener(bookmarkListener);
+//                    HandleSearch();
+//                    return true;
+//
+//                case 2131230818: //mark
+//                    if (currentUser == null){
+//                        new AlertDialog.Builder(this)
+//                                .setTitle("Chưa đăng nhập")
+//                                .setMessage("Bạn cần đăng nhập để sử dụng tính năng này")
+//                                .setPositiveButton("Đăng nhập", (dialog, which) -> {
+//                                    // Chuyển hướng đến LoginActivity
+//                                    Intent loginIntent = new Intent(this, LoginActivity.class);
+//                                    this.startActivity(loginIntent);
+//                                })
+//                                .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+//                                .show();
+//                        return false;
+//                    } else {
+//                        String id = currentUser.getUid();
+//
+//                        recyclerViewCategory.setVisibility(View.GONE);
+//                        recyclerViewNews.setVisibility(View.VISIBLE);
+//                        svSearch.setVisibility(View.GONE);
+//                        tvBookmark.setVisibility(View.VISIBLE);
+//                        tvHistory.setVisibility(View.GONE);
+//                        RemoveFragment(settingFragment);
+//
+//                        if (bookmarkListener == null) {
+//                            bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
+//                        }
+//                    }
+//                    return true;
+//
+//                case 2131231138: //setting
+//                    // Hủy listener nếu khong ở Bookmark
+//                    RemoveListener(bookmarkListener);
+//                    HandleSetting();
+//                    return true;
+//            }
+            int itemId = item.getItemId();
+            if (itemId == 2131230947) { // home
+                // Hủy listener nếu không ở Bookmark
+                RemoveListener(bookmarkListener);
+                HandleHome();
+                return true;
 
-                case 2131230818: //mark
-                    if (currentUser == null){
-                        new AlertDialog.Builder(this)
-                                .setTitle("Chưa đăng nhập")
-                                .setMessage("Bạn cần đăng nhập để sử dụng tính năng này")
-                                .setPositiveButton("Đăng nhập", (dialog, which) -> {
-                                    // Chuyển hướng đến LoginActivity
-                                    Intent loginIntent = new Intent(this, LoginActivity.class);
-                                    this.startActivity(loginIntent);
-                                })
-                                .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
-                                .show();
-                        return false;
-                    } else {
-                        String id = currentUser.getUid();
+            } else if (itemId == R.id.search) { // search
+                // Hủy listener nếu không ở Bookmark
+                RemoveListener(bookmarkListener);
+                HandleSearch();
+                return true;
 
-                        recyclerViewCategory.setVisibility(View.GONE);
-                        recyclerViewNews.setVisibility(View.VISIBLE);
-                        svSearch.setVisibility(View.GONE);
-                        tvBookmark.setVisibility(View.VISIBLE);
-                        tvHistory.setVisibility(View.GONE);
-                        RemoveFragment(settingFragment);
+            } else if (itemId == R.id.bookmark) { // mark
+                if (currentUser == null) {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Chưa đăng nhập")
+                            .setMessage("Bạn cần đăng nhập để sử dụng tính năng này")
+                            .setPositiveButton("Đăng nhập", (dialog, which) -> {
+                                // Chuyển hướng đến LoginActivity
+                                Intent loginIntent = new Intent(this, LoginActivity.class);
+                                this.startActivity(loginIntent);
+                            })
+                            .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+                            .show();
+                    return false;
+                } else {
+                    String id = currentUser.getUid();
 
-                        if (bookmarkListener == null) {
-                            bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
-                        }
+                    recyclerViewCategory.setVisibility(View.GONE);
+                    recyclerViewNews.setVisibility(View.VISIBLE);
+                    svSearch.setVisibility(View.GONE);
+                    tvBookmark.setVisibility(View.VISIBLE);
+                    tvHistory.setVisibility(View.GONE);
+                    RemoveFragment(settingFragment);
+
+                    if (bookmarkListener == null) {
+                        bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
                     }
-                    return true;
+                }
+                return true;
 
-                case 2131231138: //setting
-                    // Hủy listener nếu khong ở Bookmark
-                    RemoveListener(bookmarkListener);
-                    HandleSetting();
-                    return true;
+            } else if (itemId == R.id.setting) { // setting
+                // Hủy listener nếu không ở Bookmark
+                RemoveListener(bookmarkListener);
+                HandleSetting();
+                return true;
+
+            } else {
+                Toast.makeText(this, "Không nhận diện dc id bottom nav", Toast.LENGTH_SHORT).show();
+                return false;
             }
-            return false;
+            //return false;
         });
 
         // Cấu hình RecyclerView và sự kiện cuộn

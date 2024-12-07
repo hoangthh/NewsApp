@@ -65,7 +65,6 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(FirebaseUser user) {
                         Toast.makeText(LoginActivity.this, "Welcome " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
-                        Log.d("LoginActivity", "User logged in: " + user.getDisplayName());
                         // Chuyển đến màn hình chính sau khi đăng nhập
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
@@ -77,9 +76,6 @@ public class LoginActivity extends AppCompatActivity {
                         Log.e("LoginActivity", "Error logging in", e);
                     }
                 });
-            } else {
-                Log.e("LoginActivity", "onActivityResult data is null");
-                Toast.makeText(LoginActivity.this, "Login Failed: No data received", Toast.LENGTH_SHORT).show();
             }
         }
     }

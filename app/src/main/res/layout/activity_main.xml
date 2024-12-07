@@ -89,11 +89,20 @@
                     android:textSize="30sp"
                     android:textStyle="bold"/>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvNews"
+                <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    app:layout_constraintTop_toBottomOf="@id/rvCategory" />
+                    android:layout_below="@id/rvCategory"
+                    android:id="@+id/swipeRefreshLayout">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvNews"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:layout_constraintTop_toBottomOf="@id/rvCategory" />
+                </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>
@@ -113,9 +122,14 @@
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="0dp"
+        app:itemIconTint="@color/black"
+        app:itemTextColor="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:menu="@menu/bottom_nav_menu" />
+        android:background="#FFF"
+        app:menu="@menu/bottom_nav_menu"
+        android:fitsSystemWindows="true"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
 

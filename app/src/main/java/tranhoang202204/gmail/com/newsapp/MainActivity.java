@@ -34,6 +34,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -69,7 +70,7 @@ import java.util.regex.Pattern;
 
 import tranhoang202204.gmail.com.newsapp.databinding.ActivityMainBinding;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     FirebaseHelper firebaseHelper;
     Category category;
 
@@ -95,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
 
     ProgressBar progressBar;
 
+    SwipeRefreshLayout swipeRefreshLayout;
+
     @SuppressLint({"MissingInflatedId", "NonConstantResourceId", "ResourceType"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,8 +112,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         InitMainActivity();
-        sqliteHelper = new SQLiteHelper(this);
-        progressBar = findViewById(R.id.progressBar);
 
         if (NetworkUtils.isNetworkAvailable(this)) {
             // Có kết nối mạng: Lấy tin từ Firebase và lưu vào SQLite
@@ -141,8 +142,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             else {
+                swipeRefreshLayout.setRefreshing(true);
                 // Nếu không phải lịch sử, load dữ liệu mặc định (tin tức chính)
                 LoadHomeData();
+
             }
 
             Toast.makeText(this, "Internet connected", Toast.LENGTH_LONG).show();
@@ -206,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Cấu hình RecyclerView và sự kiện cuộn
-        setupRecyclerView();
+        //setupRecyclerView();
     }
 
     private void setupRecyclerView() {
@@ -270,6 +273,14 @@ public class MainActivity extends AppCompatActivity {
         // Khoi tao Setting Fragment
         settingFragment = new SettingFragment();
 
+        // Khoi tao Sqlite
+        sqliteHelper = new SQLiteHelper(this);
+        progressBar = findViewById(R.id.progressBar);
+
+        // Anh xa SwipeRefreshLayout
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setOnRefreshListener(this);
+
         // Tạo và gán Adapter News
         newsAdapter = new NewsViewAdapter(this, getBaseContext(), newsList);
         recyclerViewNews.setLayoutManager(new LinearLayoutManager(getBaseContext()));
@@ -288,6 +299,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onRssReadComplete() {
                 firebaseHelper.getNewsAndAddNewsToSqlite(newsList, newsAdapter, sqliteHelper);
+                swipeRefreshLayout.setRefreshing(false);
 //                firebaseHelper.getNewsWithPagination(newsList, newsAdapter, sqliteHelper, true, success -> {
 //                    if (success) {
 //                        Toast.makeText(MainActivity.this, "First loaded news from Firebase", Toast.LENGTH_LONG).show();
@@ -316,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
         RemoveFragment(settingFragment);
 
         // Tải dữ liệu từ Firestore
-        firebaseHelper.getNews(newsList, newsAdapter);
+        firebaseHelper.getNewsAndAddNewsToSqlite(newsList, newsAdapter, sqliteHelper);
     }
 
     private void HandleSearch(){
@@ -403,6 +415,14 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.remove(fragment);
 
         fragmentTransaction.commit();
+    }
+
+    @Override
+    public void onRefresh() {
+        if (!newsList.isEmpty()){
+            Toast.makeText(this, "Already have news", Toast.LENGTH_SHORT).show();
+        }
+        LoadHomeData();
     }
 }
 

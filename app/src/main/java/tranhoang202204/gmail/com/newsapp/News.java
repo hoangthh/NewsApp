@@ -1,6 +1,8 @@
 package tranhoang202204.gmail.com.newsapp;
 
-public class News {
+import java.io.Serializable;
+
+public class News implements Serializable {
     private String id;
     private String imageUrl;
     private String title;
@@ -10,6 +12,7 @@ public class News {
     private String link;
     private String comment;
     private String bookmarked;
+    private String content;
 
     public News(String id, String imageUrl, String title, String description, String tag, String date, String bookmarked, String link) {
         this.id = id;
@@ -20,6 +23,18 @@ public class News {
         this.date = date;
         this.bookmarked = bookmarked;
         this.link = link;
+    }
+
+    public News(String id, String imageUrl, String title, String description, String tag, String date, String bookmarked, String link, String content) {
+        this.id = id;
+        this.imageUrl = imageUrl;
+        this.title = title;
+        this.description = description;
+        this.tag = tag;
+        this.date = date;
+        this.bookmarked = bookmarked;
+        this.link = link;
+        this.content = content;
     }
 
     public String getId() {
@@ -87,11 +102,11 @@ public class News {
         this.link = link;
     }
 
-    public String toggleBookmark(String bookmarkStatus){
-        String newBookmarkStatus = "true";
-        if ("true".equals(bookmarkStatus)){
-            newBookmarkStatus = "false";
-        }
-        return newBookmarkStatus;
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

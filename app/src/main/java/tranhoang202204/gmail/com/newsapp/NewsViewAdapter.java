@@ -8,6 +8,8 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -18,7 +20,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
     private LayoutInflater mInflater;
@@ -26,6 +30,8 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
     private MainActivity mainActivity;
 
     private FirebaseHelper firebaseHelper;
+
+    private final Set<Integer> animatedPositions = new HashSet<>();
 
     public NewsViewAdapter(MainActivity mainActivity, Context context, List<News> newsList) {
         this.mInflater = LayoutInflater.from(context);
@@ -61,6 +67,13 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
         }
         Picasso.get().load(currentNews.getImageUrl()).into(holder.getImageView());
 
+        holder.itemView.clearAnimation(); // Xóa animation cũ trước khi áp dụng mới
+        if (!animatedPositions.contains(position)) {
+            Animation animation = AnimationUtils.loadAnimation(holder.itemView.getContext(), R.anim.anim_recyclerviewnews);
+            holder.itemView.startAnimation(animation);
+            animatedPositions.add(position);
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (!NetworkUtils.isNetworkAvailable(mInflater.getContext())){
                 Toast.makeText(mInflater.getContext(), "Internet disabled to read detail news", Toast.LENGTH_SHORT).show();
@@ -81,6 +94,7 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
             Intent intent = new Intent(mainActivity, DetailActivity.class);
             intent.putExtra("link", currentNews.getLink());
             mainActivity.startActivity(intent);
+            mainActivity.overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
         });
 
         holder.getImvBookmark().setOnClickListener(v -> {
@@ -116,6 +130,7 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
                 }
             }
         });
+
     }
 
     @Override

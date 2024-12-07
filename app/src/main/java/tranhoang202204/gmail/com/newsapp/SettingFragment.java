@@ -1,14 +1,17 @@
 package tranhoang202204.gmail.com.newsapp;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,7 +26,7 @@ import com.squareup.picasso.Picasso;
  * create an instance of this fragment.
  */
 public class SettingFragment extends Fragment {
-    TextView tvLogin, tvDisplayName, tvEmail, tvLogout, tvBookmark, tvHistory;
+    TextView tvLogin, tvDisplayName, tvEmail, tvLogout, tvBookmark, tvHistory, tvAdmin;
     ImageView imvAvatar;
 
     private FirebaseHelper firebaseHelper; // Thêm FirebaseHelper
@@ -89,7 +92,37 @@ public class SettingFragment extends Fragment {
 
         tvLogout = view.findViewById(R.id.tvLogout);
 
+        tvAdmin= view.findViewById(R.id.tvAdmin);
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        tvAdmin.setOnClickListener(v -> {
+            final EditText input = new EditText(getActivity());
+            input.setHint("Nhập mật khẩu");
+            input.setInputType(InputType.TYPE_CLASS_TEXT); // Loại input là text
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("Chức năng Admin")
+                    .setMessage("Bạn cần nhập mật khẩu của admin để đăng nhập")
+                    .setView(input)
+                    .setPositiveButton("Đăng nhập", (dialog, which) -> {
+                        // Lấy dữ liệu từ EditText
+                        String inputData = input.getText().toString();
+                        if (inputData.isEmpty()) {
+                            Toast.makeText(getActivity(), "Vui lòng nhập mật khẩu", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (!inputData.equals("admin")) {
+                            Toast.makeText(getActivity(), "Mật khẩu không đúng", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        // Chuyển hướng đến AdminHomeActivity
+                        Intent intent = new Intent(getActivity(), AdminHomeActivity.class);
+                        this.startActivity(intent);
+                        getActivity().overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
+                    })
+                    .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+                    .show();
+        });
 
         if (currentUser != null) {
             // Người dùng đã đăng nhập
@@ -109,12 +142,14 @@ public class SettingFragment extends Fragment {
                 Intent intent = new Intent(getActivity(), MainActivity.class);
                 intent.putExtra("viewType", "bookmark"); // Gửi loại dữ liệu là 'history'
                 startActivity(intent);
+                getActivity().overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
             });
 
             tvHistory.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), MainActivity.class);
                 intent.putExtra("viewType", "history"); // Gửi loại dữ liệu là 'history'
                 startActivity(intent);
+                getActivity().overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
             });
 
             // Đăng xuất khi click vào tvLogout
@@ -153,6 +188,7 @@ public class SettingFragment extends Fragment {
         tvLogin.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), LoginActivity.class);
             startActivity(intent);
+            getActivity().overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
 
             // Hành động khi click vào TextView
             Toast.makeText(getContext(), "Đăng nhập Google được nhấn", Toast.LENGTH_SHORT).show();

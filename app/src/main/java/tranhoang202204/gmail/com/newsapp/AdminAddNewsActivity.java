@@ -2,6 +2,7 @@ package tranhoang202204.gmail.com.newsapp;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -145,6 +146,8 @@ public class AdminAddNewsActivity extends AppCompatActivity {
     private void ExecuteUpdateNews() {
         new FirebaseHelper().updateNews(currentNews.getId(), newsItem, isSuccess -> {
             if (isSuccess) {
+                Intent intent = new Intent(this, AdminHomeActivity.class);
+                startActivity(intent);
                 Toast.makeText(this, "Chỉnh sửa tin tức thành công", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Chỉnh sửa tin tức thất bại", Toast.LENGTH_SHORT).show();
@@ -157,9 +160,11 @@ public class AdminAddNewsActivity extends AppCompatActivity {
             @Override
             public void onNewsAddComplete() {
                 if (btnCreate.getText().toString().equals("Tạo tin")){
+                    Intent intent = new Intent(AdminAddNewsActivity.this, AdminHomeActivity.class);
+                    startActivity(intent);
                     Toast.makeText(AdminAddNewsActivity.this, "Tạo tin tức mới thành công", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(AdminAddNewsActivity.this, "Chỉnh sửa tin tức thành công", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AdminAddNewsActivity.this, "Tạo tin tức mới thất bại", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -171,18 +176,6 @@ public class AdminAddNewsActivity extends AppCompatActivity {
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh")); // Thiết lập múi giờ
         String dateBefore = sdf.format(new Date(currentTimeMillis)); // Kết quả định dạng
         date = TimeDifference.getTimeDifference(dateBefore);
-    }
-
-    private void CheckDataFromInput() {
-
-    }
-
-    private void GetDataFromInput() {
-        imageUrl = edtImageUrl.getText().toString();
-        title = edtTitle.getText().toString();
-        description = edtDescription.getText().toString();
-        content = edtContent.getText().toString();
-        tag = "trang-chu";
     }
 
     private void InitCreate() {

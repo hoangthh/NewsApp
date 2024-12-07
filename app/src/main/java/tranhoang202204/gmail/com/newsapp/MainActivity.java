@@ -207,7 +207,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 //                    return true;
 //            }
             int itemId = item.getItemId();
-            Toast.makeText(this, "" + item.getItemId(), Toast.LENGTH_SHORT).show();
             if (itemId == 2131230953) { // home
                 // Hủy listener nếu không ở Bookmark
                 if (bookmarkListener != null) {
@@ -265,7 +264,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 return true;
 
             } else {
-                Toast.makeText(this, "Không nhận diện dc id bottom nav", Toast.LENGTH_SHORT).show();
                 return false;
             }
             //return false;

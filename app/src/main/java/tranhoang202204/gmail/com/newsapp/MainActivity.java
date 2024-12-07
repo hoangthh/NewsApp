@@ -207,7 +207,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 //                    return true;
 //            }
             int itemId = item.getItemId();
-            if (itemId == 2131230947) { // home
+            Toast.makeText(this, "" + item.getItemId(), Toast.LENGTH_SHORT).show();
+            if (itemId == 2131230953) { // home
                 // Hủy listener nếu không ở Bookmark
                 if (bookmarkListener != null) {
                     bookmarkListener.remove();

@@ -14,17 +14,6 @@ public class News implements Serializable {
     private String bookmarked;
     private String content;
 
-    public News(String id, String imageUrl, String title, String description, String tag, String date, String bookmarked, String link) {
-        this.id = id;
-        this.imageUrl = imageUrl;
-        this.title = title;
-        this.description = description;
-        this.tag = tag;
-        this.date = date;
-        this.bookmarked = bookmarked;
-        this.link = link;
-    }
-
     public News(String id, String imageUrl, String title, String description, String tag, String date, String bookmarked, String link, String content) {
         this.id = id;
         this.imageUrl = imageUrl;

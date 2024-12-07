@@ -206,7 +206,8 @@ public class FirebaseHelper {
                                 (String) data.get("tag"),
                                 (String) data.get("date"),
                                 "false", // Tạm thời đặt trạng thái bookmark là false
-                                (String) data.get("link")
+                                (String) data.get("link"),
+                                (String) data.get("content")
                         );
 
                         if (currentUser != null){
@@ -244,7 +245,8 @@ public class FirebaseHelper {
                                 (String) data.get("tag"),
                                 (String) data.get("date"),
                                 "false", // Tạm thời đặt trạng thái bookmark là false
-                                (String) data.get("link")
+                                (String) data.get("link"),
+                                (String) data.get("content")
                         );
                         newsList.add(news);
                     }
@@ -285,7 +287,8 @@ public class FirebaseHelper {
                                 (String) data.get("tag"),
                                 (String) data.get("date"),
                                 "false", // Tạm thời đặt trạng thái bookmark là false
-                                (String) data.get("link")
+                                (String) data.get("link"),
+                                (String) data.get("content")
                         );
 
                         if (currentUser != null) {
@@ -359,7 +362,8 @@ public class FirebaseHelper {
                             (String) data.get("tag"),
                             (String) data.get("date"),
                             "false",
-                            (String) data.get("link")
+                            (String) data.get("link"),
+                            (String) data.get("content")
                     );
 
                     newsList.add(news);
@@ -425,7 +429,8 @@ public class FirebaseHelper {
                                                 (String) data.get("tag"),
                                                 (String) data.get("date"),
                                                 "false", // Tạm thời đặt trạng thái bookmark là false
-                                                (String) data.get("link")
+                                                (String) data.get("link"),
+                                                (String) data.get("content")
                                         );
 
                                         if (currentUser != null){
@@ -472,7 +477,8 @@ public class FirebaseHelper {
                                             (String) data.get("tag"),
                                             (String) data.get("date"),
                                             "false",
-                                            (String) data.get("link")
+                                            (String) data.get("link"),
+                                            (String) data.get("content")
                                     );
 
                                     if (currentUser != null){
@@ -516,7 +522,8 @@ public class FirebaseHelper {
                                             (String) data.get("tag"),
                                             (String) data.get("date"),
                                             "false",
-                                            (String) data.get("link")
+                                            (String) data.get("link"),
+                                            (String) data.get("content")
                                     );
 
                                     newsList.add(news);
@@ -626,7 +633,8 @@ public class FirebaseHelper {
                                     (String) data.get("tag"),
                                     (String) data.get("date"),
                                     "true", // Đánh dấu là đã bookmark
-                                    (String) data.get("link")
+                                    (String) data.get("link"),
+                                    (String) data.get("content")
                             );
                             newsList.add(news);
                         }
@@ -681,7 +689,8 @@ public class FirebaseHelper {
                                 (String) data.get("tag"),
                                 (String) data.get("date"),
                                 "false", // Bookmark mặc định là false
-                                (String) data.get("link")
+                                (String) data.get("link"),
+                                (String) data.get("content")
                         );
 
                         checkBookmark(news, newsAdapter);

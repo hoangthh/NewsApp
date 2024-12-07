@@ -81,10 +81,28 @@ public class AdminAddNewsActivity extends AppCompatActivity {
         });
 
         btnCreate.setOnClickListener(v -> {
+            imageUrl = edtImageUrl.getText().toString();
+            title = edtTitle.getText().toString();
+            description = edtDescription.getText().toString();
+            content = edtContent.getText().toString();
+            tag = "trang-chu";
 
-            GetDataFromInput();
-
-            CheckDataFromInput();
+            if (imageUrl.isEmpty()) {
+                Toast.makeText(this, "Link ảnh bìa không được để trống", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (title.isEmpty()) {
+                Toast.makeText(this, "Tiêu đề không được để trống", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (description.isEmpty()) {
+                Toast.makeText(this, "Mô tả không được để trống", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (content.isEmpty()) {
+                Toast.makeText(this, "Nội dung không được để trống", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             // Hiển thị AlertDialog xác nhận
             String action = btnCreate.getText().toString(); // Lấy tên hành động (Tạo tin hoặc Chỉnh sửa)
@@ -156,22 +174,7 @@ public class AdminAddNewsActivity extends AppCompatActivity {
     }
 
     private void CheckDataFromInput() {
-        if (imageUrl.isEmpty()) {
-            Toast.makeText(this, "Link ảnh bìa không được để trống", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (title.isEmpty()) {
-            Toast.makeText(this, "Tiêu đề không được để trống", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (description.isEmpty()) {
-            Toast.makeText(this, "Mô tả không được để trống", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (content.isEmpty()) {
-            Toast.makeText(this, "Nội dung không được để trống", Toast.LENGTH_SHORT).show();
-            return;
-        }
+
     }
 
     private void GetDataFromInput() {

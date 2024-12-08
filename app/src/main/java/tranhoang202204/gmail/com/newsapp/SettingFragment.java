@@ -26,8 +26,7 @@ import com.squareup.picasso.Picasso;
  * create an instance of this fragment.
  */
 public class SettingFragment extends Fragment {
-    TextView tvLogin, tvDisplayName, tvEmail, tvLogout, tvBookmark, tvHistory, tvAdmin;
-    ImageView imvAvatar;
+    TextView tvLogin, tvLogout, tvBookmark, tvHistory, tvAdmin, tvProfile;
 
     private FirebaseHelper firebaseHelper; // Thêm FirebaseHelper
 
@@ -83,10 +82,8 @@ public class SettingFragment extends Fragment {
         firebaseHelper.initGoogleSignInClient(getActivity());
 
         tvLogin = view.findViewById(R.id.tvLogin);
-        tvDisplayName = view.findViewById(R.id.tvDisplayName);
-        tvEmail = view.findViewById(R.id.tvEmail);
-        imvAvatar = view.findViewById(R.id.imvAvatar);
 
+        tvProfile = view.findViewById(R.id.tvProfile);
         tvBookmark = view.findViewById(R.id.tvBookmark);
         tvHistory = view.findViewById(R.id.tvHistory);
 
@@ -95,6 +92,11 @@ public class SettingFragment extends Fragment {
         tvAdmin= view.findViewById(R.id.tvAdmin);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        tvProfile.setOnClickListener(v -> {
+            startActivity(new Intent(getActivity(), ProfileActivity.class));
+            getActivity().overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
+        });
 
         tvAdmin.setOnClickListener(v -> {
             final EditText input = new EditText(getActivity());
@@ -128,15 +130,7 @@ public class SettingFragment extends Fragment {
             // Người dùng đã đăng nhập
             tvLogin.setVisibility(View.GONE); // Ẩn TextView Đăng nhập
             tvLogout.setVisibility(View.VISIBLE);
-
-            // Hiển thị thông tin người dùng
-            tvDisplayName.setText(currentUser.getDisplayName());
-            tvEmail.setText(currentUser.getEmail());
-
-            // Tải ảnh đại diện của người dùng (nếu có) bằng Picasso
-            if (currentUser.getPhotoUrl() != null) {
-                Picasso.get().load(currentUser.getPhotoUrl()).into(imvAvatar);
-            }
+            tvProfile.setVisibility(View.VISIBLE);
 
             tvBookmark.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), MainActivity.class);
@@ -160,12 +154,10 @@ public class SettingFragment extends Fragment {
                     public void onSignOutComplete() {
                         // Khi đăng xuất thành công
                         tvLogin.setVisibility(View.VISIBLE); // Hiển thị lại TextView Đăng nhập
-                        tvDisplayName.setVisibility(View.GONE); // Ẩn các thông tin người dùng
-                        tvEmail.setVisibility(View.GONE);
-                        imvAvatar.setVisibility(View.GONE);
                         tvBookmark.setVisibility(View.GONE);
                         tvHistory.setVisibility(View.GONE);
                         tvLogout.setVisibility(View.GONE);
+                        tvProfile.setVisibility(View.GONE);
 
                         // Hiển thị thông báo
                         Toast.makeText(getContext(), "Đăng xuất thành công", Toast.LENGTH_SHORT).show();
@@ -176,12 +168,10 @@ public class SettingFragment extends Fragment {
         } else {
             // Người dùng chưa đăng nhập
             tvLogin.setVisibility(View.VISIBLE); // Hiển thị lại TextView Đăng nhập
-            tvDisplayName.setVisibility(View.GONE); // Ẩn các thông tin người dùng
-            tvEmail.setVisibility(View.GONE);
-            imvAvatar.setVisibility(View.GONE);
             tvBookmark.setVisibility(View.GONE);
             tvHistory.setVisibility(View.GONE);
             tvLogout.setVisibility(View.GONE);
+            tvProfile.setVisibility(View.GONE);
         }
 
         // Gán sự kiện click

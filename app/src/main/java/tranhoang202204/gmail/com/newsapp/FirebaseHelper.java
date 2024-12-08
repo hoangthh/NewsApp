@@ -629,10 +629,8 @@ public class FirebaseHelper {
                         if (user != null) {
                             String uid = user.getUid();
                             Map<String, Object> userData = new HashMap<>();
-                            String photoUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRRKwlzPBML6h_otq5cAuXnQfPX5LsCYZehQ&s";
                             userData.put("name", name);
                             userData.put("email", email);
-                            userData.put("photoUrl", photoUrl);
                             userData.put("uid", uid);
 
                             db.collection("users").document(uid)
@@ -680,6 +678,23 @@ public class FirebaseHelper {
                 });
     }
 
+    public void fetchUserName(final NameFetchCallback callback) {
+        // Truy vấn document của user dựa trên userId
+        db.collection("users")
+                .document(currentUser.getUid())
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            // Lấy ra field "name"
+                            String name = document.getString("name");
+                            callback.onNameFetched(name); // Gọi callback trả về name
+                        }
+                    }
+                });
+    }
+
     // Callback interfaces
     public interface RegistrationCallback {
         void onSuccess(String uid);
@@ -699,9 +714,7 @@ public class FirebaseHelper {
         void onFailure(String errorMessage);
     }
 
-    public interface ChangePasswordCallback {
-        void onSuccess(String message);
-
-        void onFailure(String errorMessage);
+    public interface NameFetchCallback {
+        void onNameFetched(String name); // Trả về name
     }
 }

@@ -10,6 +10,7 @@ import android.widget.VideoView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.File;
 import java.util.List;
 
 public class VideoShortAdapter extends RecyclerView.Adapter<VideoShortAdapter.VideoViewHolder> {
@@ -52,11 +53,19 @@ public class VideoShortAdapter extends RecyclerView.Adapter<VideoShortAdapter.Vi
         public void setVideoData(VideoShort videoShort) {
             title.setText(videoShort.getTitle());
             desc.setText(videoShort.getDesc());
-            videoView.setVideoPath(videoShort.getVideoUrl());
+
+            // Lấy đường dẫn file trong cache
+            File cacheFile = new File(itemView.getContext().getCacheDir(), videoShort.getFileName());
+            if (cacheFile.exists()) {
+                // Nếu file đã có trong cache
+                videoView.setVideoPath(cacheFile.getAbsolutePath());
+            } else {
+                // Nếu chưa có, hiển thị thông báo hoặc tải lại
+                videoView.setVideoPath(videoShort.getVideoUrl()); // Dự phòng trong khi tải
+            }
 
             videoView.setOnPreparedListener(mp -> {
                 mp.start();
-
                 float videoRatio = mp.getVideoWidth() / (float) mp.getVideoHeight();
                 float screenRatio = videoView.getWidth() / (float) videoView.getHeight();
                 float scale = videoRatio / screenRatio;

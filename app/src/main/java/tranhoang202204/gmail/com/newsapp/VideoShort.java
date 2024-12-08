@@ -20,4 +20,9 @@ public class VideoShort {
     public String getDesc() {
         return desc;
     }
+
+    // Tạo tên file từ URL
+    public String getFileName() {
+        return videoUrl.substring(videoUrl.lastIndexOf('/') + 1);
+    }
 }

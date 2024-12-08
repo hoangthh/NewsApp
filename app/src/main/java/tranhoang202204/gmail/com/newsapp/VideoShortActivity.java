@@ -13,8 +13,17 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class VideoShortActivity extends AppCompatActivity {
     private ViewPager2 viewPager2;
@@ -51,22 +60,123 @@ public class VideoShortActivity extends AppCompatActivity {
         viewPager2.setAdapter(adapter);
     }
 
+//    private void loadVideoData() {
+//        firestore.collection("videos")
+//                .get()
+//                .addOnCompleteListener(task -> {
+//                    if (task.isSuccessful()) {
+//                        for (QueryDocumentSnapshot document : task.getResult()) {
+//                            String title = document.getString("title");
+//                            String url = document.getString("url");
+//                            String description = document.getString("description");
+//
+//                            videoShortList.add(new VideoShort(url, title, description));
+//                        }
+//                        adapter.notifyDataSetChanged();
+//                    } else {
+//                        Log.e("Firestore", "Error getting documents: ", task.getException());
+//                    }
+//                });
+//    }
+
     private void loadVideoData() {
         firestore.collection("videos")
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
+                        List<VideoShort> tempVideoList = new ArrayList<>();
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             String title = document.getString("title");
                             String url = document.getString("url");
                             String description = document.getString("description");
 
-                            videoShortList.add(new VideoShort(url, title, description));
+                            VideoShort video = new VideoShort(url, title, description);
+                            tempVideoList.add(video);
                         }
-                        adapter.notifyDataSetChanged();
+
+                        // Đảm bảo tải video đầu tiên trước khi cập nhật giao diện
+                        if (!tempVideoList.isEmpty()) {
+                            downloadVideoToCache(tempVideoList.get(0), () -> {
+                                videoShortList.addAll(tempVideoList);
+                                adapter.notifyDataSetChanged();
+                            });
+                        }
                     } else {
                         Log.e("Firestore", "Error getting documents: ", task.getException());
                     }
                 });
     }
+
+
+    // Hàm tải video về cache
+    private void downloadVideoToCache(VideoShort videoShort, Runnable onComplete) {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url(videoShort.getVideoUrl()).build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("VideoDownload", "Download failed: " + e.getMessage());
+                if (onComplete != null) {
+                    runOnUiThread(onComplete);
+                }
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    File cacheFile = new File(getCacheDir(), videoShort.getFileName());
+                    try (FileOutputStream fos = new FileOutputStream(cacheFile)) {
+                        fos.write(response.body().bytes());
+                        Log.d("VideoDownload", "Video cached: " + cacheFile.getAbsolutePath());
+                    }
+                } else {
+                    Log.e("VideoDownload", "Download failed with response: " + response.message());
+                }
+
+                if (onComplete != null) {
+                    runOnUiThread(onComplete);
+                }
+            }
+        });
+    }
+
+    private void downloadAllVideosToCache(List<VideoShort> videoList, Runnable onComplete) {
+        OkHttpClient client = new OkHttpClient();
+        int[] pendingCount = {videoList.size()};
+
+        for (VideoShort video : videoList) {
+            Request request = new Request.Builder().url(video.getVideoUrl()).build();
+
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    Log.e("VideoDownload", "Failed: " + e.getMessage());
+                    checkCompletion();
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    if (response.isSuccessful()) {
+                        File cacheFile = new File(getCacheDir(), video.getFileName());
+                        try (FileOutputStream fos = new FileOutputStream(cacheFile)) {
+                            fos.write(response.body().bytes());
+                        }
+                    }
+                    checkCompletion();
+                }
+
+                private void checkCompletion() {
+                    synchronized (pendingCount) {
+                        pendingCount[0]--;
+                        if (pendingCount[0] == 0 && onComplete != null) {
+                            runOnUiThread(onComplete);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+
 }

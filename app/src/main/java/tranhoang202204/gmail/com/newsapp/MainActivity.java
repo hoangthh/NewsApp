@@ -207,6 +207,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 }
                 return true;
 
+            } else if (itemId == R.id.video) {
+//                bookmarkListener.remove();
+                HandleVideo();
+                return true;
             } else if (itemId == R.id.setting) { // setting
                 // Hủy listener nếu không ở Bookmark
                 if (bookmarkListener != null) {
@@ -381,6 +385,26 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 return false;
             }
         });
+    }
+
+    private void HandleVideo() {
+//        // Kiểm tra nếu người dùng chưa đăng nhập
+//        if (currentUser == null) {
+//            new AlertDialog.Builder(this)
+//                    .setTitle("Chưa đăng nhập")
+//                    .setMessage("Bạn cần đăng nhập để sử dụng tính năng này")
+//                    .setPositiveButton("Đăng nhập", (dialog, which) -> {
+//                        // Chuyển hướng đến LoginActivity
+//                        Intent loginIntent = new Intent(this, LoginActivity.class);
+//                        startActivity(loginIntent);
+//                    })
+//                    .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
+//                    .show();
+//            return;
+//        }
+        // Nếu người dùng đã đăng nhập, mở VideoShortActivity
+        Intent intent = new Intent(MainActivity.this, VideoShortActivity.class);
+        startActivity(intent);
     }
 
     private void HandleBookmark(){

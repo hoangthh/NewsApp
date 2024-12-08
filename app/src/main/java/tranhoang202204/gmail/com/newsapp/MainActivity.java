@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -111,12 +112,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        // URL của trang web bạn muốn lấy dữ liệu
-        String url = "https://thethao247.vn/395-ket-qua-mu-vs-nottingham-forest-00h30-hom-nay-08-12-d350535.html";
-
-        // Thực hiện lấy dữ liệu từ URL trong background thread
-        new CrawlData(this).execute(url);
 
         InitMainActivity();
 

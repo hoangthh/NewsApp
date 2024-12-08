@@ -16,6 +16,15 @@
         android:theme="@style/Theme.NewsApp"
         tools:targetApi="31">
         <activity
+            android:name=".ForgotPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DetailNewsActivity"
+            android:exported="false" />
+        <activity
             android:name=".AdminAddNewsActivity"
             android:exported="false" />
         <activity

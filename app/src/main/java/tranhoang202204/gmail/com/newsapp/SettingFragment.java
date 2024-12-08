@@ -187,8 +187,8 @@ public class SettingFragment extends Fragment {
         // Gán sự kiện click
         tvLogin.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), LoginActivity.class);
-            startActivity(intent);
-            getActivity().overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
+            this.getActivity().startActivity(intent);
+            this.getActivity().overridePendingTransition(R.anim.anim_in_activity, R.anim.anim_out_activity);
         });
 
         return view;

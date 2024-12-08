@@ -4,6 +4,7 @@ import static android.content.ContentValues.TAG;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.telephony.ims.RegistrationManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -619,4 +620,88 @@ public class FirebaseHelper {
             });
     }
 
+    // Đăng ký người dùng
+    public void registerUser(String email, String password, String name, RegistrationCallback callback) {
+        auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = task.getResult().getUser();
+                        if (user != null) {
+                            String uid = user.getUid();
+                            Map<String, Object> userData = new HashMap<>();
+                            String photoUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRRKwlzPBML6h_otq5cAuXnQfPX5LsCYZehQ&s";
+                            userData.put("name", name);
+                            userData.put("email", email);
+                            userData.put("photoUrl", photoUrl);
+                            userData.put("uid", uid);
+
+                            db.collection("users").document(uid)
+                                    .set(userData)
+                                    .addOnCompleteListener(saveTask -> {
+                                        if (saveTask.isSuccessful()) {
+                                            callback.onSuccess(uid);
+                                        } else {
+                                            callback.onFailure("Failed to save user data: " + saveTask.getException().getMessage());
+                                        }
+                                    });
+                        }
+                    } else {
+                        callback.onFailure("Failed to register: " + task.getException().getMessage());
+                    }
+                });
+    }
+
+    // Đăng nhập người dùng
+    public void loginUser(String email, String password, LoginEmailCallback callback) {
+        auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = auth.getCurrentUser();
+                        if (user != null) {
+                            callback.onSuccess(user.getUid());
+                        } else {
+                            callback.onFailure("Login failed: User is null.");
+                        }
+                    } else {
+                        callback.onFailure("Failed to login: " + task.getException().getMessage());
+                    }
+                });
+    }
+
+    // Gửi email đặt lại mật khẩu
+    public void resetPassword(String email, ResetPasswordCallback callback) {
+        auth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onSuccess();
+                    } else {
+                        callback.onFailure(task.getException().getMessage());
+                    }
+                });
+    }
+
+    // Callback interfaces
+    public interface RegistrationCallback {
+        void onSuccess(String uid);
+
+        void onFailure(String errorMessage);
+    }
+
+    public interface LoginEmailCallback {
+        void onSuccess(String uid);
+
+        void onFailure(String errorMessage);
+    }
+
+    public interface ResetPasswordCallback {
+        void onSuccess();
+
+        void onFailure(String errorMessage);
+    }
+
+    public interface ChangePasswordCallback {
+        void onSuccess(String message);
+
+        void onFailure(String errorMessage);
+    }
 }

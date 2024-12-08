@@ -106,8 +106,7 @@ public class ReadRss extends AsyncTask<String, Void, String> {
             // Biểu thức chính quy để loại bỏ thẻ HTML
             description = descriptionCDATA.replaceAll("<[^>]*>", "").trim();
             title = titleCDATA;
-            String dateRss = parser.getValue(element, "pubDate");
-            date = TimeDifference.getTimeDifference(dateRss);
+            date = parser.getValue(element, "pubDate");
             link = parser.getValue(element, "link");
             tag = this.tag;
             bookmark = "false";

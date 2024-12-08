@@ -58,7 +58,8 @@ public class NewsViewAdapter extends RecyclerView.Adapter<NewsViewHolder> {
         holder.getTxtTitle().setText(currentNews.getTitle());
         holder.getTxtDescription().setText(currentNews.getDescription());
         holder.getTxtTag().setText(new Category().getCategoryForTag(currentNews.getTag()));
-        holder.getTxtDate().setText(currentNews.getDate());
+        String dateDiff = TimeDifference.getTimeDifference(currentNews.getDate());
+        holder.getTxtDate().setText(dateDiff);
         //holder.getTxtComment().setText(currentNews.getComment());
         if ("true".equals(currentNews.getBookmarked())) {
             holder.getImvBookmark().setImageResource(R.drawable.bookmark);

@@ -54,7 +54,8 @@ public class AdminNewsViewAdapter extends RecyclerView.Adapter<AdminNewsViewHold
         News currentNews = newsList.get(position);
 
         holder.getTxtTitle().setText(currentNews.getTitle());
-        holder.getTxtDate().setText(currentNews.getDate());
+        String dateDiff = TimeDifference.getTimeDifference(currentNews.getDate());
+        holder.getTxtDate().setText(dateDiff);
         Picasso.get().load(currentNews.getImageUrl()).into(holder.getImvImage());
 
         holder.itemView.clearAnimation(); // Xóa animation cũ trước khi áp dụng mới
@@ -65,6 +66,11 @@ public class AdminNewsViewAdapter extends RecyclerView.Adapter<AdminNewsViewHold
         }
 
         holder.getImbEdit().setOnClickListener(v -> {
+            if (!NetworkUtils.isNetworkAvailable(mInflater.getContext())) {
+                Toast.makeText(holder.itemView.getContext(), "Vui lòng kết nối mạng để chỉnh sửa", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if (!currentNews.getLink().isEmpty()) {
                 Toast.makeText(adminHomeActivity, "Không thể chỉnh sửa bài viết này", Toast.LENGTH_SHORT).show();
                 return;
@@ -78,12 +84,10 @@ public class AdminNewsViewAdapter extends RecyclerView.Adapter<AdminNewsViewHold
         });
 
         holder.getImbDelete().setOnClickListener(v -> {
-            Toast.makeText(adminHomeActivity, "Delete click", Toast.LENGTH_SHORT).show();
             if (!NetworkUtils.isNetworkAvailable(mInflater.getContext())) {
-                Toast.makeText(holder.itemView.getContext(), "Internet disabled to delete news", Toast.LENGTH_SHORT).show();
+                Toast.makeText(holder.itemView.getContext(), "Vui lòng kết nối mạng để xóa tin", Toast.LENGTH_SHORT).show();
                 return;
             }
-            Toast.makeText(adminHomeActivity, "Prepare to delete", Toast.LENGTH_SHORT).show();
 
             // Hiển thị xác nhận xóa
             new AlertDialog.Builder(adminHomeActivity)
@@ -115,10 +119,8 @@ public class AdminNewsViewAdapter extends RecyclerView.Adapter<AdminNewsViewHold
                 return;
             }
 
-            Toast.makeText(adminHomeActivity, "Edit or Delete click", Toast.LENGTH_SHORT).show();
-
             if (!NetworkUtils.isNetworkAvailable(mInflater.getContext())){
-                Toast.makeText(mInflater.getContext(), "Internet disabled to read detail news", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mInflater.getContext(), "Vui lòng kết nối mạng để đọc tin chi tiết", Toast.LENGTH_SHORT).show();
                 return;
             }
 

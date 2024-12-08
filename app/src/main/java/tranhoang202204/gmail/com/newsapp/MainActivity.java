@@ -95,9 +95,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     SQLiteHelper sqliteHelper;
 
-    ProgressBar progressBar;
-
     SwipeRefreshLayout swipeRefreshLayout;
+
+    String currentCategoryTag = null;
 
     @SuppressLint({"MissingInflatedId", "NonConstantResourceId", "ResourceType"})
     @Override
@@ -111,6 +111,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        // URL của trang web bạn muốn lấy dữ liệu
+        String url = "https://thethao247.vn/395-ket-qua-mu-vs-nottingham-forest-00h30-hom-nay-08-12-d350535.html";
+
+        // Thực hiện lấy dữ liệu từ URL trong background thread
+        new CrawlData(this).execute(url);
 
         InitMainActivity();
 
@@ -145,6 +151,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             }
             else {
                 swipeRefreshLayout.setRefreshing(true);
+                sqliteHelper.deleteAllNews();
                 // Nếu không phải lịch sử, load dữ liệu mặc định (tin tức chính)
                 LoadHomeData();
 
@@ -157,55 +164,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         }
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-
-//            switch (item.getItemId()) {
-//                case 2131230947: //home
-//                    // Hủy listener nếu khong ở Bookmark
-//                    RemoveListener(bookmarkListener);
-//                    HandleHome();
-//                    return true;
-//
-//                case 2131231124: //search
-//                    // Hủy listener nếu khong ở Bookmark
-//                    RemoveListener(bookmarkListener);
-//                    HandleSearch();
-//                    return true;
-//
-//                case 2131230818: //mark
-//                    if (currentUser == null){
-//                        new AlertDialog.Builder(this)
-//                                .setTitle("Chưa đăng nhập")
-//                                .setMessage("Bạn cần đăng nhập để sử dụng tính năng này")
-//                                .setPositiveButton("Đăng nhập", (dialog, which) -> {
-//                                    // Chuyển hướng đến LoginActivity
-//                                    Intent loginIntent = new Intent(this, LoginActivity.class);
-//                                    this.startActivity(loginIntent);
-//                                })
-//                                .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
-//                                .show();
-//                        return false;
-//                    } else {
-//                        String id = currentUser.getUid();
-//
-//                        recyclerViewCategory.setVisibility(View.GONE);
-//                        recyclerViewNews.setVisibility(View.VISIBLE);
-//                        svSearch.setVisibility(View.GONE);
-//                        tvBookmark.setVisibility(View.VISIBLE);
-//                        tvHistory.setVisibility(View.GONE);
-//                        RemoveFragment(settingFragment);
-//
-//                        if (bookmarkListener == null) {
-//                            bookmarkListener = firebaseHelper.getBookmarkedNews(newsList, newsAdapter);
-//                        }
-//                    }
-//                    return true;
-//
-//                case 2131231138: //setting
-//                    // Hủy listener nếu khong ở Bookmark
-//                    RemoveListener(bookmarkListener);
-//                    HandleSetting();
-//                    return true;
-//            }
             int itemId = item.getItemId();
             if (itemId == 2131230953) { // home
                 // Hủy listener nếu không ở Bookmark
@@ -270,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         });
 
         // Cấu hình RecyclerView và sự kiện cuộn
-        //setupRecyclerView();
+        setupRecyclerView();
     }
 
     private void setupRecyclerView() {
@@ -280,19 +238,24 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
 
-                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                if (layoutManager != null && layoutManager.findLastVisibleItemPosition() == newsList.size() - 1) {
-                    // Hiển thị ProgressBar khi tải thêm dữ liệu
-                    progressBar.setVisibility(View.VISIBLE);
+                // Tính toán vị trí cuộn
+                int scrollExtent = recyclerView.computeVerticalScrollExtent();
+                int scrollOffset = recyclerView.computeVerticalScrollOffset();
+                int scrollRange = recyclerView.computeVerticalScrollRange();
 
-                    firebaseHelper.getNewsWithPagination(newsList, newsAdapter, sqliteHelper, false, success -> {
-                        progressBar.setVisibility(View.GONE);
-                        if (success) {
-                            Toast.makeText(MainActivity.this, "Loaded more news", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(MainActivity.this, "Failed to load more news", Toast.LENGTH_SHORT).show();
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                if (scrollOffset + scrollExtent >= scrollRange - 100) {
+
+                    // Thêm độ trễ 1 giây trước khi tải thêm dữ liệu
+                    new android.os.Handler().postDelayed(() -> {
+                        if (!currentCategoryTag.equals("trang-chu")) {
+                            return;
                         }
-                    });
+                        // Nếu không, gọi getNewsWithPagination
+                        firebaseHelper.getNewsWithPagination(newsList, newsAdapter, sqliteHelper, false, success -> {
+                            swipeRefreshLayout.setRefreshing(false);
+                        });
+                    }, 3000); // Độ trễ 1 giây (1000ms)
                 }
             }
         });
@@ -336,7 +299,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         // Khoi tao Sqlite
         sqliteHelper = new SQLiteHelper(this);
-        progressBar = findViewById(R.id.progressBar);
 
         // Anh xa SwipeRefreshLayout
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
@@ -347,9 +309,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         recyclerViewNews.setLayoutManager(new LinearLayoutManager(getBaseContext()));
         recyclerViewNews.setAdapter(newsAdapter);
 
+        currentCategoryTag = "trang-chu";
         // Tạo và gán Adapter Category
         recyclerViewCategory.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        categoryAdapter = new CategoryViewAdapter(this, category.getCategoryList(), newsList, newsAdapter);
+        categoryAdapter = new CategoryViewAdapter(this, category.getCategoryList(), newsList, newsAdapter,tag -> {
+            // Khi danh mục được chọn
+            currentCategoryTag = tag;
+        });
         recyclerViewCategory.setAdapter(categoryAdapter);
     }
 
@@ -359,15 +325,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         new ReadRss("trang-chu", new RssReadListener() {
             @Override
             public void onRssReadComplete() {
-                firebaseHelper.getNewsAndAddNewsToSqlite(newsList, newsAdapter, sqliteHelper);
-                swipeRefreshLayout.setRefreshing(false);
-//                firebaseHelper.getNewsWithPagination(newsList, newsAdapter, sqliteHelper, true, success -> {
-//                    if (success) {
-//                        Toast.makeText(MainActivity.this, "First loaded news from Firebase", Toast.LENGTH_LONG).show();
-//                    } else {
-//                        Toast.makeText(MainActivity.this, "Failed to first load news", Toast.LENGTH_LONG).show();
-//                    }
-//                });
+                //firebaseHelper.getNewsAndAddNewsToSqlite(newsList, newsAdapter, sqliteHelper);
+                //swipeRefreshLayout.setRefreshing(false);
+                firebaseHelper.getNewsWithPagination(newsList, newsAdapter, sqliteHelper, true, success -> {
+                    swipeRefreshLayout.setRefreshing(false);
+                });
             }
         }).execute(rssUrl);
     }
@@ -382,7 +344,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         RemoveFragment(settingFragment);
 
         // Tải dữ liệu từ Firestore
-        firebaseHelper.getNewsAndAddNewsToSqlite(newsList, newsAdapter, sqliteHelper);
+        //firebaseHelper.getNewsAndAddNewsToSqlite(newsList, newsAdapter, sqliteHelper);
+        LoadHomeData();
     }
 
     private void HandleSearch(){
@@ -474,7 +437,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     public void onRefresh() {
         if (!newsList.isEmpty()){
-            Toast.makeText(this, "Already have news", Toast.LENGTH_SHORT).show();
+            swipeRefreshLayout.setRefreshing(false);
+            return;
+        }
+        if (!currentCategoryTag.equals("trang-chu")) {
+            swipeRefreshLayout.setRefreshing(false);
+            return;
         }
         LoadHomeData();
     }

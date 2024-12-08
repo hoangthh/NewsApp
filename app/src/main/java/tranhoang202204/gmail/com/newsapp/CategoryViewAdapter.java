@@ -26,8 +26,9 @@ public class CategoryViewAdapter extends RecyclerView.Adapter<CategoryViewHolder
 
     private List<News> newsList;
     private NewsViewAdapter newsAdapter;
+    private OnCategoryClickListener listener;
 
-    public CategoryViewAdapter(Context context, List<String> categoryList, List<News> newsList, NewsViewAdapter newsAdapter) {
+    public CategoryViewAdapter(Context context, List<String> categoryList, List<News> newsList, NewsViewAdapter newsAdapter, OnCategoryClickListener listener) {
         this.mInflater = LayoutInflater.from(context);
         this.context = context;
         this.categoryList = categoryList;
@@ -63,19 +64,26 @@ public class CategoryViewAdapter extends RecyclerView.Adapter<CategoryViewHolder
 
         // Xử lý sự kiện click
         holder.itemView.setOnClickListener(v -> {
-            if (!NetworkUtils.isNetworkAvailable(context)) {
-                Toast.makeText(context, "Internet disabled to use category", Toast.LENGTH_SHORT).show();
-                return;
-            }
             // Đặt lại vị trí chọn và notify adapter
             selectedPosition = position;
-            notifyDataSetChanged();
+            newsList.clear();
+            newsAdapter.notifyDataSetChanged();
+            this.notifyDataSetChanged();
+
+            Category category = new Category();
+            String tag = category.getTagForCategory(currentCategory);
+
+            if (!NetworkUtils.isNetworkAvailable(context)) {
+                new SQLiteHelper(context).fetchNewsByTagFromSQLite(tag, newsList, newsAdapter);
+                Toast.makeText(context, "Mất kết nối mạng, tin tức từ Sqlite", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
 
             if (context instanceof MainActivity) {
                 // Khi click, gọi fetchNews với tag tương ứng
-                Category category = new Category();
-                String tag = category.getTagForCategory(currentCategory);
-                new FirebaseHelper().getNewsByTag(tag, newsList, newsAdapter);
+
+                new FirebaseHelper().getNewsByTag(tag, newsList, newsAdapter, new SQLiteHelper(context));
             }
         });
     }
@@ -83,5 +91,9 @@ public class CategoryViewAdapter extends RecyclerView.Adapter<CategoryViewHolder
     @Override
     public int getItemCount() {
         return categoryList.size();
+    }
+
+    public interface OnCategoryClickListener {
+        void onCategoryClick(String tag);
     }
 }

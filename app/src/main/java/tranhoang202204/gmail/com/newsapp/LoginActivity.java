@@ -64,7 +64,7 @@ public class LoginActivity extends AppCompatActivity {
                 firebaseHelper.signInWithGoogle(data, this, new FirebaseHelper.LoginCallback() {
                     @Override
                     public void onSuccess(FirebaseUser user) {
-                        Toast.makeText(LoginActivity.this, "Welcome " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "Chào mừng " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
                         // Chuyển đến màn hình chính sau khi đăng nhập
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
@@ -72,8 +72,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(Exception e) {
-                        Toast.makeText(LoginActivity.this, "Login Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        Log.e("LoginActivity", "Error logging in", e);
+                        Toast.makeText(LoginActivity.this, "Đăng nhập không thành công, mã lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
             }

@@ -86,6 +86,12 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         return db.rawQuery("SELECT * FROM " + TABLE_NEWS, null);
     }
 
+    public Cursor getNewsByTag(String tag) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + TABLE_NEWS + " WHERE " + COLUMN_TAG + " = ?";
+        return db.rawQuery(query, new String[]{tag});
+    }
+
     @SuppressLint("Range")
     public Map<String, String> mapCursorToNewsData(Cursor cursor) {
         Map<String, String> newsData = new HashMap<>();
@@ -111,7 +117,6 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         cursor.close();
         return exists;
     }
-
 
     public void fetchNewsFromSQLite(List<News> newsList, NewsViewAdapter newsAdapter) {
         Cursor cursor = this.getAllNews();
@@ -140,5 +145,45 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         // Cập nhật RecyclerView
         newsAdapter.update(newsList);
         newsAdapter.notifyDataSetChanged();
+    }
+
+    public void fetchNewsByTagFromSQLite(String tag, List<News> newsList, NewsViewAdapter newsAdapter) {
+        // Lấy dữ liệu từ SQLite theo tag
+        Cursor cursor = this.getNewsByTag(tag);
+        if (cursor.moveToFirst()) {
+            newsList.clear();  // Xóa danh sách tin tức cũ
+
+            do {
+                // Chuyển đổi dữ liệu từ Cursor thành Map<String, String>
+                Map<String, String> newsData = this.mapCursorToNewsData(cursor);
+
+                // Tạo đối tượng News từ dữ liệu
+                News news = new News(
+                        newsData.get("id"),
+                        newsData.get("imageUrl"),
+                        newsData.get("title"),
+                        newsData.get("description"),
+                        newsData.get("tag"),
+                        newsData.get("date"),
+                        newsData.get("bookmark"),
+                        newsData.get("link")
+                );
+
+                // Thêm tin vào danh sách hiển thị
+                newsList.add(news);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        // Cập nhật RecyclerView với dữ liệu mới
+        newsAdapter.update(newsList);
+        newsAdapter.notifyDataSetChanged();
+    }
+
+    // Hàm xóa tất cả dữ liệu trong bảng news
+    public void deleteAllNews() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DELETE FROM " + TABLE_NEWS); // Xóa tất cả dữ liệu trong bảng news
+        db.close();
     }
 }

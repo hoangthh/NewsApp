@@ -7,6 +7,9 @@
     <item android:title="Search"
         android:icon="@drawable/search"
         android:id="@+id/search"/>
+    <item android:title="Short"
+        android:icon="@drawable/video"
+        android:id="@+id/video"/>
     <item android:title="Bookmark"
         android:icon="@drawable/bookmark"
         android:id="@+id/bookmark"/>

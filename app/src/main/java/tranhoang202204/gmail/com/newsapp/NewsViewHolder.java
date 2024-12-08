@@ -42,10 +42,6 @@ public class NewsViewHolder extends RecyclerView.ViewHolder{
         return txtDate;
     }
 
-    public TextView getTxtComment() {
-        return txtComment;
-    }
-
     public ImageView getImageView() {
         return imvImage;
     }

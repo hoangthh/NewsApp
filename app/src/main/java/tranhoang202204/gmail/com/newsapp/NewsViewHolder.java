@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class NewsViewHolder extends RecyclerView.ViewHolder{
-    private TextView txtTitle, txtDescription, txtTag, txtDate, txtComment;
+    private TextView txtTitle, txtDescription, txtTag, txtDate;
     private ImageView imvImage, imvBookmark;
     private NewsViewAdapter adapter;
 
@@ -21,7 +21,6 @@ public class NewsViewHolder extends RecyclerView.ViewHolder{
         txtDescription = itemView.findViewById(R.id.tvDescription);
         txtTag = itemView.findViewById(R.id.tvTag);
         txtDate = itemView.findViewById(R.id.tvDate);
-        txtComment = itemView.findViewById(R.id.tvComment);
         imvImage = itemView.findViewById(R.id.ivImage);
         imvBookmark = itemView.findViewById(R.id.imvBookmark);
         this.adapter = adapter;

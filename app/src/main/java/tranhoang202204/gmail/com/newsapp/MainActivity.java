@@ -319,7 +319,12 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     private void LoadHomeData(){
-        if (!NetworkUtils.isNetworkAvailable(this)) {return;}
+        if (!NetworkUtils.isNetworkAvailable(this)) {
+            // Không có kết nối mạng: Lấy tin từ SQLite
+            sqliteHelper.fetchNewsFromSQLite(newsList, newsAdapter);
+
+            Toast.makeText(this, "Mất kết nối mạng", Toast.LENGTH_LONG).show();
+            return;}
         // Tải dữ liệu từ Firestore
         String rssUrl = "https://thethao247.vn/" + "trang-chu" + ".rss";
         new ReadRss("trang-chu", new RssReadListener() {

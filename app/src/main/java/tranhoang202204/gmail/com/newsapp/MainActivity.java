@@ -319,6 +319,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     }
 
     private void LoadHomeData(){
+        if (!NetworkUtils.isNetworkAvailable(this)) {return;}
         // Tải dữ liệu từ Firestore
         String rssUrl = "https://thethao247.vn/" + "trang-chu" + ".rss";
         new ReadRss("trang-chu", new RssReadListener() {
@@ -369,14 +370,16 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             @Override
             public boolean onQueryTextSubmit(String query) {
                 // Tìm kiếm khi người dùng nhấn Enter
-                firebaseHelper.searchNewsByTitle(query, newsList, newsAdapter);
+                if (NetworkUtils.isNetworkAvailable(MainActivity.this)) {
+                    firebaseHelper.searchNewsByTitle(query, newsList, newsAdapter);
+                }
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 // Tìm kiếm khi người dùng thay đổi văn bản
-                if (!newText.isEmpty()) {
+                if (!newText.isEmpty() && NetworkUtils.isNetworkAvailable(MainActivity.this)) {
                     firebaseHelper.searchNewsByTitle(newText, newsList, newsAdapter);
                 } else {
                     newsList.clear();
